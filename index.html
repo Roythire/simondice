@@ -47,27 +47,55 @@
             font-family: 'Orbitron', sans-serif;
         }
 
-        /* Botón cósmico de enlace al Agujero de Gusano */
-        .wormhole-btn {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.22));
+        /* Botón desplegable cósmico de Portales */
+        .portals-trigger {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.24));
             border: 1px solid rgba(56, 189, 248, 0.45);
             box-shadow: 0 0 18px rgba(56, 189, 248, 0.2), inset 0 0 12px rgba(168, 85, 247, 0.15);
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .wormhole-btn:hover {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(168, 85, 247, 0.35));
+        .portals-trigger:hover,
+        .portals-trigger[aria-expanded="true"] {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(168, 85, 247, 0.36));
             border-color: #7dd3fc;
-            box-shadow: 0 0 24px rgba(56, 189, 248, 0.5), 0 0 12px rgba(192, 132, 252, 0.35);
-            transform: translateY(-1px);
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.45), 0 0 12px rgba(192, 132, 252, 0.35);
         }
 
-        .wormhole-btn:hover .vortex-icon {
+        .portals-trigger:hover .vortex-icon,
+        .portals-trigger[aria-expanded="true"] .vortex-icon {
             transform: rotate(180deg) scale(1.08);
         }
 
         .vortex-icon {
             transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Panel desplegable del menú de portales */
+        .portals-menu {
+            background: rgba(13, 17, 26, 0.96);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 
+                0 20px 45px rgba(0, 0, 0, 0.85),
+                0 0 25px rgba(56, 189, 248, 0.18);
+            transform-origin: top right;
+            transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+        }
+
+        .portals-menu.closed {
+            opacity: 0;
+            transform: scale(0.95) translateY(-6px);
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .portals-menu.open {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            visibility: visible;
+            pointer-events: auto;
         }
 
         /* Contenedor principal circular de la consola */
@@ -262,31 +290,88 @@
 </head>
 <body class="flex flex-col items-center justify-between py-5 px-4">
 
-    <!-- Cabecera Superior con Enlace al Agujero de Gusano y Marcadores -->
-    <header class="w-full max-w-md flex flex-col items-center gap-3.5">
+    <!-- Cabecera Superior con Menú Desplegable de Portales y Marcadores -->
+    <header class="w-full max-w-md flex flex-col items-center gap-3.5 relative z-30">
         
-        <!-- Barra Superior: Título + Enlace Portal Agujero de Gusano + Botón Silencio -->
+        <!-- Barra Superior: Título + Menú Desplegable Portales + Botón Silencio -->
         <div class="w-full flex items-center justify-between gap-2">
             <div class="shrink-0">
-                <h1 class="font-display text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-blue-400 to-rose-400 bg-clip-text text-transparent">
+                <h1 class="font-display text-lg sm:text-2xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-blue-400 to-rose-400 bg-clip-text text-transparent">
                     SIMÓN DICE
                 </h1>
                 <p class="text-[11px] text-slate-400">Memoria & Reflejos</p>
             </div>
 
             <div class="flex items-center gap-2">
-                <!-- Botón Cósmico: Viajar por el Agujero de Gusano -->
-                <a href="https://roythire.github.io/simondice/wormhole" target="_blank" rel="noopener noreferrer" aria-label="Viajar por el Agujero de Gusano" class="wormhole-btn px-3 py-2.5 rounded-xl text-sky-200 hover:text-white flex items-center gap-2 text-xs font-semibold">
-                    <!-- Ícono SVG de Portal / Vórtice -->
-                    <svg class="vortex-icon w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="9" stroke-opacity="0.45" stroke-dasharray="4 3" />
-                        <path d="M12 3a9 9 0 0 1 6.36 15.36" class="text-purple-400" stroke="currentColor" />
-                        <path d="M12 6a6 6 0 1 0 6 6" />
-                        <path d="M12 9a3 3 0 1 1-3 3" />
-                        <circle cx="12" cy="12" r="1" fill="currentColor" />
-                    </svg>
-                    <span class="leading-tight">Viajar por el Agujero de Gusano</span>
-                </a>
+                <!-- Contenedor del Menú Desplegable: Explorar Mundos / Portales -->
+                <div id="portalsDropdownWrapper" class="relative">
+                    <button id="portalsMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" class="portals-trigger px-3 py-2.5 rounded-xl text-sky-200 hover:text-white flex items-center gap-2 text-xs font-semibold">
+                        <!-- Ícono SVG de Portal / Vórtice -->
+                        <svg class="vortex-icon w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9" stroke-opacity="0.45" stroke-dasharray="4 3" />
+                            <path d="M12 3a9 9 0 0 1 6.36 15.36" class="text-purple-400" stroke="currentColor" />
+                            <path d="M12 6a6 6 0 1 0 6 6" />
+                            <path d="M12 9a3 3 0 1 1-3 3" />
+                            <circle cx="12" cy="12" r="1" fill="currentColor" />
+                        </svg>
+                        <span class="hidden sm:inline">Explorar Mundos</span>
+                        <span class="sm:hidden">Portales</span>
+                        <svg id="portalsChevron" class="w-3.5 h-3.5 text-sky-300 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+
+                    <!-- Panel Desplegable con Enlaces Directos -->
+                    <div id="portalsMenuPanel" role="menu" class="portals-menu closed absolute right-0 mt-2 w-64 sm:w-72 rounded-2xl p-2 z-50">
+                        <div class="px-3 py-1.5 border-b border-slate-800/90 mb-1.5 flex items-center justify-between">
+                            <span class="font-display text-[10px] font-bold uppercase tracking-widest text-sky-400">Portales Dimensionales</span>
+                            <span class="w-1.5 h-1.5 rounded-full bg-sky-400 animate-ping"></span>
+                        </div>
+
+                        <!-- Portal 1: Agujero de Gusano -->
+                        <a href="https://roythire.github.io/simondice/wormhole" target="_blank" rel="noopener noreferrer" role="menuitem" class="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-sky-500/15 border border-transparent hover:border-sky-400/35 transition">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500/25 to-purple-600/25 border border-sky-400/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                                <svg class="w-5 h-5 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="9" />
+                                    <circle cx="12" cy="12" r="5" />
+                                    <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-100 group-hover:text-sky-300 transition">Agujero de Gusano</span>
+                                    <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </div>
+                                <p class="text-[11px] text-slate-400 truncate">Viaje espacial 3D & proyector</p>
+                            </div>
+                        </a>
+
+                        <!-- Portal 2: Piano & FX Studio -->
+                        <a href="https://roythire.github.io/simondice/piano.html" target="_blank" rel="noopener noreferrer" role="menuitem" class="group flex items-center gap-3 p-2.5 mt-1 rounded-xl hover:bg-emerald-500/15 border border-transparent hover:border-emerald-400/35 transition">
+                            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-emerald-500/25 to-cyan-600/25 border border-emerald-400/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                                <svg class="w-5 h-5 text-emerald-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="16" rx="2" />
+                                    <path d="M7 4v10" />
+                                    <path d="M11 4v10" />
+                                    <path d="M15 4v10" />
+                                    <path d="M19 4v10" />
+                                    <path d="M3 14h18" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-slate-100 group-hover:text-emerald-300 transition">Piano & FX Studio</span>
+                                    <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                </div>
+                                <p class="text-[11px] text-slate-400 truncate">Sintetizador polifónico DSP</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
 
                 <!-- Botón de Silenciar / Activar Sonido -->
                 <button id="soundToggle" aria-label="Alternar sonido" title="Silenciar o activar sonido" class="p-2.5 rounded-xl bg-slate-800/85 hover:bg-slate-700/90 border border-slate-700/80 text-slate-200 transition flex items-center justify-center shadow-lg shrink-0">
@@ -327,7 +412,7 @@
     </header>
 
     <!-- Tablero Central Circular -->
-    <main class="my-3 flex items-center justify-center">
+    <main class="my-3 flex items-center justify-center relative z-10">
         <div id="consoleBoard" class="simon-console">
             <!-- Botón Verde (0) -->
             <div id="pad-0" data-color="0" class="pad pad-green disabled" role="button" aria-label="Verde (Tecla Q o 1)"></div>
@@ -350,7 +435,7 @@
     </main>
 
     <!-- Controles Inferiores y Selector de Dificultad -->
-    <footer class="w-full max-w-md flex flex-col gap-3">
+    <footer class="w-full max-w-md flex flex-col gap-3 relative z-10">
         <!-- Selector de Modo / Dificultad -->
         <div class="bg-slate-900/90 border border-slate-800 p-1.5 rounded-2xl grid grid-cols-3 gap-1.5">
             <button data-mode="normal" class="mode-btn selected py-2 px-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 border border-transparent hover:text-white">
@@ -427,6 +512,45 @@
         const modeButtons = document.querySelectorAll('.mode-btn');
         const modeDescription = document.getElementById('modeDescription');
         const modeBadge = document.getElementById('modeBadge');
+
+        // Referencias del Menú Desplegable de Portales
+        const portalsDropdownWrapper = document.getElementById('portalsDropdownWrapper');
+        const portalsMenuBtn = document.getElementById('portalsMenuBtn');
+        const portalsMenuPanel = document.getElementById('portalsMenuPanel');
+        const portalsChevron = document.getElementById('portalsChevron');
+
+        // --- Lógica del Menú Desplegable de Portales ---
+        function setPortalsMenuOpen(isOpen) {
+            portalsMenuBtn.setAttribute('aria-expanded', String(isOpen));
+            if (isOpen) {
+                portalsMenuPanel.classList.remove('closed');
+                portalsMenuPanel.classList.add('open');
+                portalsChevron.style.transform = 'rotate(180deg)';
+            } else {
+                portalsMenuPanel.classList.remove('open');
+                portalsMenuPanel.classList.add('closed');
+                portalsChevron.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        portalsMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const currentlyOpen = portalsMenuBtn.getAttribute('aria-expanded') === 'true';
+            setPortalsMenuOpen(!currentlyOpen);
+        });
+
+        // Cerrar el menú automáticamente al hacer clic fuera de él o presionar Escape
+        document.addEventListener('pointerdown', (e) => {
+            if (!portalsDropdownWrapper.contains(e.target)) {
+                setPortalsMenuOpen(false);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                setPortalsMenuOpen(false);
+            }
+        });
 
         // --- Motor de Audio (Web Audio API) ---
         let audioCtx = null;
