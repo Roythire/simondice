@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simón Dice - Edición Retro-Moderna</title>
-    <!-- Tailwind CSS para estructura responsiva -->
+    <!-- Tailwind CSS para diseño responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Orbitron para display digital y Inter para interfaz limpia -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -12,9 +12,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
     
     <style>
-        /* Estilos personalizados para estética retro-moderna y efectos de brillo (glow) */
+        /* Variables de paleta neón retro-moderna */
         :root {
-            --bg-dark: #090b10;
+            --bg-dark: #0b0e14;
             --console-body: #151923;
             --console-ring: #222838;
             
@@ -24,7 +24,7 @@
             --yellow-off: #78350f;
             --blue-off: #1e3a8a;
 
-            /* Colores activos (encendidos) */
+            /* Colores activos (encendidos neón) */
             --green-on: #10b981;
             --red-on: #ef4444;
             --yellow-on: #f59e0b;
@@ -34,8 +34,8 @@
         body {
             background-color: var(--bg-dark);
             background-image: 
-                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.14) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.09) 0%, transparent 50%);
             font-family: 'Inter', sans-serif;
             color: #f8fafc;
             user-select: none;
@@ -47,11 +47,34 @@
             font-family: 'Orbitron', sans-serif;
         }
 
+        /* Botón cósmico de enlace al Agujero de Gusano */
+        .wormhole-btn {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(168, 85, 247, 0.22));
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            box-shadow: 0 0 18px rgba(56, 189, 248, 0.2), inset 0 0 12px rgba(168, 85, 247, 0.15);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .wormhole-btn:hover {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(168, 85, 247, 0.35));
+            border-color: #7dd3fc;
+            box-shadow: 0 0 24px rgba(56, 189, 248, 0.5), 0 0 12px rgba(192, 132, 252, 0.35);
+            transform: translateY(-1px);
+        }
+
+        .wormhole-btn:hover .vortex-icon {
+            transform: rotate(180deg) scale(1.08);
+        }
+
+        .vortex-icon {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
         /* Contenedor principal circular de la consola */
         .simon-console {
             position: relative;
-            width: min(86vw, 400px);
-            height: min(86vw, 400px);
+            width: min(84vw, 390px);
+            height: min(84vw, 390px);
             border-radius: 50%;
             background: var(--console-body);
             padding: 16px;
@@ -94,7 +117,7 @@
             content: '';
             position: absolute;
             inset: 0;
-            background: radial-gradient(circle at center, rgba(255,255,255,0.25) 0%, transparent 70%);
+            background: radial-gradient(circle at center, rgba(255,255,255,0.28) 0%, transparent 70%);
             opacity: 0;
             transition: opacity 0.12s ease;
         }
@@ -123,8 +146,8 @@
             background-color: var(--green-on);
             border-color: #6ee7b7;
             box-shadow: 
-                0 0 35px rgba(16, 185, 129, 0.85),
-                inset 0 0 20px rgba(255, 255, 255, 0.6);
+                0 0 38px rgba(16, 185, 129, 0.9),
+                inset 0 0 22px rgba(255, 255, 255, 0.65);
             transform: scale(1.02);
             z-index: 5;
         }
@@ -141,8 +164,8 @@
             background-color: var(--red-on);
             border-color: #fca5a5;
             box-shadow: 
-                0 0 35px rgba(239, 68, 68, 0.85),
-                inset 0 0 20px rgba(255, 255, 255, 0.6);
+                0 0 38px rgba(239, 68, 68, 0.9),
+                inset 0 0 22px rgba(255, 255, 255, 0.65);
             transform: scale(1.02);
             z-index: 5;
         }
@@ -159,8 +182,8 @@
             background-color: var(--yellow-on);
             border-color: #fcd34d;
             box-shadow: 
-                0 0 35px rgba(245, 158, 11, 0.85),
-                inset 0 0 20px rgba(255, 255, 255, 0.6);
+                0 0 38px rgba(245, 158, 11, 0.9),
+                inset 0 0 22px rgba(255, 255, 255, 0.65);
             transform: scale(1.02);
             z-index: 5;
         }
@@ -177,8 +200,8 @@
             background-color: var(--blue-on);
             border-color: #93c5fd;
             box-shadow: 
-                0 0 35px rgba(59, 130, 246, 0.85),
-                inset 0 0 20px rgba(255, 255, 255, 0.6);
+                0 0 38px rgba(59, 130, 246, 0.9),
+                inset 0 0 22px rgba(255, 255, 255, 0.65);
             transform: scale(1.02);
             z-index: 5;
         }
@@ -224,7 +247,7 @@
             background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border-color: #60a5fa;
-            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.45);
         }
 
         /* Pulso sutil para el indicador de turno */
@@ -237,31 +260,47 @@
         }
     </style>
 </head>
-<body class="flex flex-col items-center justify-between py-6 px-4">
+<body class="flex flex-col items-center justify-between py-5 px-4">
 
-    <!-- Cabecera y Marcadores -->
-    <header class="w-full max-w-md flex flex-col items-center gap-4">
-        <div class="w-full flex items-center justify-between">
-            <div>
-                <h1 class="font-display text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-blue-400 to-rose-400 bg-clip-text text-transparent">
+    <!-- Cabecera Superior con Enlace al Agujero de Gusano y Marcadores -->
+    <header class="w-full max-w-md flex flex-col items-center gap-3.5">
+        
+        <!-- Barra Superior: Título + Enlace Portal Agujero de Gusano + Botón Silencio -->
+        <div class="w-full flex items-center justify-between gap-2">
+            <div class="shrink-0">
+                <h1 class="font-display text-xl sm:text-2xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-blue-400 to-rose-400 bg-clip-text text-transparent">
                     SIMÓN DICE
                 </h1>
-                <p class="text-xs text-slate-400">Memoria & Reflejos</p>
+                <p class="text-[11px] text-slate-400">Memoria & Reflejos</p>
             </div>
 
-            <!-- Botón de Silenciar / Activar Sonido -->
-            <button id="soundToggle" aria-label="Alternar sonido" class="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-200 transition flex items-center gap-2 shadow-lg">
-                <!-- Icono Sonido Activado -->
-                <svg id="iconSoundOn" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
-                </svg>
-                <!-- Icono Sonido Silenciado (Oculto por defecto) -->
-                <svg id="iconSoundOff" class="w-5 h-5 text-rose-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
-                </svg>
-                <span id="soundLabel" class="text-xs font-medium hidden sm:inline">Sonido ON</span>
-            </button>
+            <div class="flex items-center gap-2">
+                <!-- Botón Cósmico: Viajar por el Agujero de Gusano -->
+                <a href="https://roythire.github.io/simondice/wormhole" target="_blank" rel="noopener noreferrer" aria-label="Viajar por el Agujero de Gusano" class="wormhole-btn px-3 py-2.5 rounded-xl text-sky-200 hover:text-white flex items-center gap-2 text-xs font-semibold">
+                    <!-- Ícono SVG de Portal / Vórtice -->
+                    <svg class="vortex-icon w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9" stroke-opacity="0.45" stroke-dasharray="4 3" />
+                        <path d="M12 3a9 9 0 0 1 6.36 15.36" class="text-purple-400" stroke="currentColor" />
+                        <path d="M12 6a6 6 0 1 0 6 6" />
+                        <path d="M12 9a3 3 0 1 1-3 3" />
+                        <circle cx="12" cy="12" r="1" fill="currentColor" />
+                    </svg>
+                    <span class="leading-tight">Viajar por el Agujero de Gusano</span>
+                </a>
+
+                <!-- Botón de Silenciar / Activar Sonido -->
+                <button id="soundToggle" aria-label="Alternar sonido" title="Silenciar o activar sonido" class="p-2.5 rounded-xl bg-slate-800/85 hover:bg-slate-700/90 border border-slate-700/80 text-slate-200 transition flex items-center justify-center shadow-lg shrink-0">
+                    <!-- Icono Sonido Activado -->
+                    <svg id="iconSoundOn" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                    <!-- Icono Sonido Silenciado (Oculto por defecto) -->
+                    <svg id="iconSoundOff" class="w-5 h-5 text-rose-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- Tarjetas de Puntuación y Récord -->
@@ -288,16 +327,16 @@
     </header>
 
     <!-- Tablero Central Circular -->
-    <main class="my-4 flex items-center justify-center">
+    <main class="my-3 flex items-center justify-center">
         <div id="consoleBoard" class="simon-console">
             <!-- Botón Verde (0) -->
-            <div id="pad-0" data-color="0" class="pad pad-green disabled" role="button" aria-label="Verde"></div>
+            <div id="pad-0" data-color="0" class="pad pad-green disabled" role="button" aria-label="Verde (Tecla Q o 1)"></div>
             <!-- Botón Rojo (1) -->
-            <div id="pad-1" data-color="1" class="pad pad-red disabled" role="button" aria-label="Rojo"></div>
+            <div id="pad-1" data-color="1" class="pad pad-red disabled" role="button" aria-label="Rojo (Tecla W o 2)"></div>
             <!-- Botón Amarillo (2) -->
-            <div id="pad-2" data-color="2" class="pad pad-yellow disabled" role="button" aria-label="Amarillo"></div>
+            <div id="pad-2" data-color="2" class="pad pad-yellow disabled" role="button" aria-label="Amarillo (Tecla A o 3)"></div>
             <!-- Botón Azul (3) -->
-            <div id="pad-3" data-color="3" class="pad pad-blue disabled" role="button" aria-label="Azul"></div>
+            <div id="pad-3" data-color="3" class="pad pad-blue disabled" role="button" aria-label="Azul (Tecla S o 4)"></div>
 
             <!-- Centro de la consola -->
             <div class="center-hub">
@@ -325,10 +364,15 @@
             </button>
         </div>
 
-        <!-- Descripción breve del modo seleccionado -->
-        <p id="modeDescription" class="text-xs text-center text-slate-400 px-2">
-            Velocidad estándar. Si te equivocas, puedes volver a intentar la ronda.
-        </p>
+        <!-- Descripción breve del modo seleccionado y atajos de teclado -->
+        <div class="text-center space-y-1 px-2">
+            <p id="modeDescription" class="text-xs text-slate-400">
+                Velocidad estándar. Si te equivocas, puedes volver a intentar la ronda.
+            </p>
+            <p class="text-[11px] text-slate-500">
+                Controles: Clic, Táctil o Teclado (<span class="text-slate-400 font-medium">Q/W/A/S</span> o <span class="text-slate-400 font-medium">1/2/3/4</span>)
+            </p>
+        </div>
 
         <!-- Botón Principal de Acción -->
         <button id="startBtn" class="w-full py-3.5 px-6 rounded-2xl font-display font-bold text-base sm:text-lg tracking-wider uppercase text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.99] transition-all shadow-lg shadow-emerald-950/50 border border-emerald-400/30">
@@ -352,15 +396,15 @@
 
         // --- Estado Global del Juego ---
         const state = {
-            sequence: [],           // Secuencia generada por la máquina
-            playerStep: 0,          // Índice actual que el jugador está repitiendo
-            round: 0,               // Ronda / Puntuación actual
-            highScore: 0,           // Récord almacenado en localStorage
+            sequence: [],             // Secuencia generada por la máquina
+            playerStep: 0,            // Índice actual que el jugador está repitiendo
+            round: 0,                 // Ronda / Puntuación actual
+            highScore: 0,             // Récord almacenado en localStorage
             isPlayingSequence: false, // Bloquea interacción mientras la CPU muestra la secuencia
-            isGameActive: false,    // Indica si hay una partida en curso
-            soundEnabled: true,     // Control de audio
-            mode: 'normal',         // 'normal' | 'fast' | 'strict'
-            timeouts: []            // Almacena IDs de temporizadores para cancelarlos al reiniciar
+            isGameActive: false,      // Indica si hay una partida en curso
+            soundEnabled: true,       // Control de audio
+            mode: 'normal',           // 'normal' | 'fast' | 'strict'
+            timeouts: []              // Almacena IDs de temporizadores para cancelarlos al reiniciar
         };
 
         // --- Referencias al DOM ---
@@ -375,7 +419,6 @@
         const soundToggle = document.getElementById('soundToggle');
         const iconSoundOn = document.getElementById('iconSoundOn');
         const iconSoundOff = document.getElementById('iconSoundOff');
-        const soundLabel = document.getElementById('soundLabel');
         const currentScoreEl = document.getElementById('currentScore');
         const highScoreEl = document.getElementById('highScore');
         const hubCounterEl = document.getElementById('hubCounter');
@@ -410,10 +453,10 @@
                 const osc = audioCtx.createOscillator();
                 const gainNode = audioCtx.createGain();
 
-                osc.type = 'sine'; // Onda sinusoidal cálida tipo retro
+                osc.type = 'sine'; // Onda sinusoidal cálida retro
                 osc.frequency.setValueAtTime(TONES[colorIndex], audioCtx.currentTime);
 
-                // Envolvente ADSR simple para evitar clics de audio
+                // Envolvente suave para evitar clics de audio
                 gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
                 gainNode.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.03);
                 gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
@@ -637,7 +680,7 @@
             void consoleBoard.offsetWidth; // Forzar reflow para reiniciar animación
             consoleBoard.classList.add('console-shake');
 
-            // Destello rojo breve en todos los botones
+            // Destello breve en todos los botones
             pads.forEach(p => p.classList.add('active'));
             const flashTimeout = setTimeout(() => {
                 pads.forEach(p => p.classList.remove('active'));
@@ -687,11 +730,9 @@
                 initAudioContext();
                 iconSoundOn.classList.remove('hidden');
                 iconSoundOff.classList.add('hidden');
-                soundLabel.textContent = 'Sonido ON';
             } else {
                 iconSoundOn.classList.add('hidden');
                 iconSoundOff.classList.remove('hidden');
-                soundLabel.textContent = 'Silenciado';
             }
         });
 
@@ -730,7 +771,7 @@
             });
         });
 
-        // Soporte opcional para teclado (Teclas 1, 2, 3, 4 o Q, W, A, S)
+        // Soporte para teclado (Teclas 1, 2, 3, 4 o Q, W, A, S)
         document.addEventListener('keydown', (e) => {
             if (!state.isGameActive || state.isPlayingSequence) return;
             const keyMap = {
@@ -739,7 +780,7 @@
                 '3': 2, 'a': 2, 'A': 2,
                 '4': 3, 's': 3, 'S': 3
             };
-            if (keyMap.hasOwnProperty(e.key)) {
+            if (Object.prototype.hasOwnProperty.call(keyMap, e.key)) {
                 handlePlayerInput(keyMap[e.key]);
             }
         });
