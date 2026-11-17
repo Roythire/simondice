@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simón Dice - Edición Retro-Moderna</title>
+    <!-- Tailwind CSS para estructura responsiva -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Orbitron para display digital y Inter para interfaz limpia -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos personalizados para estética retro-moderna y efectos de brillo (glow) */
+        :root {
+            --bg-dark: #090b10;
+            --console-body: #151923;
+            --console-ring: #222838;
+            
+            /* Colores base (apagados) */
+            --green-off: #064e3b;
+            --red-off: #7f1d1d;
+            --yellow-off: #78350f;
+            --blue-off: #1e3a8a;
+
+            /* Colores activos (encendidos) */
+            --green-on: #10b981;
+            --red-on: #ef4444;
+            --yellow-on: #f59e0b;
+            --blue-on: #3b82f6;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+            font-family: 'Inter', sans-serif;
+            color: #f8fafc;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            min-height: 100vh;
+        }
+
+        .font-display {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Contenedor principal circular de la consola */
+        .simon-console {
+            position: relative;
+            width: min(86vw, 400px);
+            height: min(86vw, 400px);
+            border-radius: 50%;
+            background: var(--console-body);
+            padding: 16px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.85),
+                inset 0 2px 4px rgba(255, 255, 255, 0.1),
+                0 0 0 8px #11141d,
+                0 0 0 10px rgba(255, 255, 255, 0.05);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        /* Animación de sacudida en caso de error */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-10px) rotate(-1deg); }
+            40% { transform: translateX(10px) rotate(1deg); }
+            60% { transform: translateX(-8px); }
+            80% { transform: translateX(8px); }
+        }
+
+        .console-shake {
+            animation: shake 0.45s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        /* Estilos comunes de los 4 cuadrantes */
+        .pad {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid rgba(255, 255, 255, 0.06);
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        .pad::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.25) 0%, transparent 70%);
+            opacity: 0;
+            transition: opacity 0.12s ease;
+        }
+
+        .pad.active::after {
+            opacity: 1;
+        }
+
+        .pad:active:not(.disabled) {
+            transform: scale(0.97);
+        }
+
+        .pad.disabled {
+            cursor: not-allowed;
+        }
+
+        /* Cuadrante Superior Izquierdo: VERDE */
+        .pad-green {
+            background-color: var(--green-off);
+            border-top-left-radius: 100%;
+            border-top-right-radius: 12px;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+        .pad-green.active {
+            background-color: var(--green-on);
+            border-color: #6ee7b7;
+            box-shadow: 
+                0 0 35px rgba(16, 185, 129, 0.85),
+                inset 0 0 20px rgba(255, 255, 255, 0.6);
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        /* Cuadrante Superior Derecho: ROJO */
+        .pad-red {
+            background-color: var(--red-off);
+            border-top-right-radius: 100%;
+            border-top-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+        .pad-red.active {
+            background-color: var(--red-on);
+            border-color: #fca5a5;
+            box-shadow: 
+                0 0 35px rgba(239, 68, 68, 0.85),
+                inset 0 0 20px rgba(255, 255, 255, 0.6);
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        /* Cuadrante Inferior Izquierdo: AMARILLO */
+        .pad-yellow {
+            background-color: var(--yellow-off);
+            border-bottom-left-radius: 100%;
+            border-top-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            border-top-right-radius: 12px;
+        }
+        .pad-yellow.active {
+            background-color: var(--yellow-on);
+            border-color: #fcd34d;
+            box-shadow: 
+                0 0 35px rgba(245, 158, 11, 0.85),
+                inset 0 0 20px rgba(255, 255, 255, 0.6);
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        /* Cuadrante Inferior Derecho: AZUL */
+        .pad-blue {
+            background-color: var(--blue-off);
+            border-bottom-right-radius: 100%;
+            border-top-right-radius: 12px;
+            border-bottom-left-radius: 12px;
+            border-top-left-radius: 12px;
+        }
+        .pad-blue.active {
+            background-color: var(--blue-on);
+            border-color: #93c5fd;
+            box-shadow: 
+                0 0 35px rgba(59, 130, 246, 0.85),
+                inset 0 0 20px rgba(255, 255, 255, 0.6);
+            transform: scale(1.02);
+            z-index: 5;
+        }
+
+        /* Núcleo Central de la Consola */
+        .center-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 44%;
+            height: 44%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #242b3d, #11151f);
+            border: 8px solid var(--console-body);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.8),
+                inset 0 2px 4px rgba(255, 255, 255, 0.15);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 8px;
+        }
+
+        /* Pantalla digital interna */
+        .digital-display {
+            background: #07090e;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.9);
+            border-radius: 8px;
+            padding: 4px 12px;
+            margin-top: 4px;
+        }
+
+        /* Botones de modo de dificultad */
+        .mode-btn {
+            transition: all 0.2s ease;
+        }
+        .mode-btn.selected {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            border-color: #60a5fa;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        /* Pulso sutil para el indicador de turno */
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; }
+        }
+        .status-pulse {
+            animation: pulseGlow 1.5s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-between py-6 px-4">
+
+    <!-- Cabecera y Marcadores -->
+    <header class="w-full max-w-md flex flex-col items-center gap-4">
+        <div class="w-full flex items-center justify-between">
+            <div>
+                <h1 class="font-display text-2xl sm:text-3xl font-black tracking-wider bg-gradient-to-r from-emerald-400 via-blue-400 to-rose-400 bg-clip-text text-transparent">
+                    SIMÓN DICE
+                </h1>
+                <p class="text-xs text-slate-400">Memoria & Reflejos</p>
+            </div>
+
+            <!-- Botón de Silenciar / Activar Sonido -->
+            <button id="soundToggle" aria-label="Alternar sonido" class="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700/80 text-slate-200 transition flex items-center gap-2 shadow-lg">
+                <!-- Icono Sonido Activado -->
+                <svg id="iconSoundOn" class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                </svg>
+                <!-- Icono Sonido Silenciado (Oculto por defecto) -->
+                <svg id="iconSoundOff" class="w-5 h-5 text-rose-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                </svg>
+                <span id="soundLabel" class="text-xs font-medium hidden sm:inline">Sonido ON</span>
+            </button>
+        </div>
+
+        <!-- Tarjetas de Puntuación y Récord -->
+        <div class="w-full grid grid-cols-2 gap-3">
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner">
+                <span class="text-[11px] uppercase tracking-widest text-slate-400 font-semibold">Ronda Actual</span>
+                <span id="currentScore" class="font-display text-2xl sm:text-3xl font-bold text-white mt-0.5">0</span>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-3 flex flex-col items-center justify-center shadow-inner">
+                <span class="text-[11px] uppercase tracking-widest text-amber-400/90 font-semibold flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                    Récord Máximo
+                </span>
+                <span id="highScore" class="font-display text-2xl sm:text-3xl font-bold text-amber-400 mt-0.5">0</span>
+            </div>
+        </div>
+
+        <!-- Banner de Estado del Juego -->
+        <div id="statusBanner" class="w-full py-2.5 px-4 rounded-xl bg-slate-800/70 border border-slate-700/70 text-center transition-all duration-300">
+            <p id="statusText" class="text-sm sm:text-base font-semibold text-slate-200">
+                Presiona "Iniciar Juego" para comenzar
+            </p>
+        </div>
+    </header>
+
+    <!-- Tablero Central Circular -->
+    <main class="my-4 flex items-center justify-center">
+        <div id="consoleBoard" class="simon-console">
+            <!-- Botón Verde (0) -->
+            <div id="pad-0" data-color="0" class="pad pad-green disabled" role="button" aria-label="Verde"></div>
+            <!-- Botón Rojo (1) -->
+            <div id="pad-1" data-color="1" class="pad pad-red disabled" role="button" aria-label="Rojo"></div>
+            <!-- Botón Amarillo (2) -->
+            <div id="pad-2" data-color="2" class="pad pad-yellow disabled" role="button" aria-label="Amarillo"></div>
+            <!-- Botón Azul (3) -->
+            <div id="pad-3" data-color="3" class="pad pad-blue disabled" role="button" aria-label="Azul"></div>
+
+            <!-- Centro de la consola -->
+            <div class="center-hub">
+                <span class="font-display text-xs sm:text-sm font-black tracking-widest text-slate-300">SIMON</span>
+                <div class="digital-display">
+                    <span id="hubCounter" class="font-display text-lg sm:text-xl font-bold text-emerald-400 tracking-wider">--</span>
+                </div>
+                <span id="modeBadge" class="text-[9px] uppercase tracking-wider text-slate-400 mt-1.5 font-semibold">Normal</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Controles Inferiores y Selector de Dificultad -->
+    <footer class="w-full max-w-md flex flex-col gap-3">
+        <!-- Selector de Modo / Dificultad -->
+        <div class="bg-slate-900/90 border border-slate-800 p-1.5 rounded-2xl grid grid-cols-3 gap-1.5">
+            <button data-mode="normal" class="mode-btn selected py-2 px-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 border border-transparent hover:text-white">
+                Normal
+            </button>
+            <button data-mode="fast" class="mode-btn py-2 px-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 border border-transparent hover:text-white">
+                Rápido ⚡
+            </button>
+            <button data-mode="strict" class="mode-btn py-2 px-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-300 border border-transparent hover:text-white">
+                Estricto 💀
+            </button>
+        </div>
+
+        <!-- Descripción breve del modo seleccionado -->
+        <p id="modeDescription" class="text-xs text-center text-slate-400 px-2">
+            Velocidad estándar. Si te equivocas, puedes volver a intentar la ronda.
+        </p>
+
+        <!-- Botón Principal de Acción -->
+        <button id="startBtn" class="w-full py-3.5 px-6 rounded-2xl font-display font-bold text-base sm:text-lg tracking-wider uppercase text-white bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.99] transition-all shadow-lg shadow-emerald-950/50 border border-emerald-400/30">
+            Iniciar Juego
+        </button>
+    </footer>
+
+    <script>
+        /**
+         * SIMÓN DICE - Lógica completa del juego y síntesis de audio
+         * Utiliza Web Audio API para generar frecuencias clásicas sin archivos externos.
+         */
+
+        // --- Configuración de Tonos Musicales (Frecuencias clásicas de Simon) ---
+        const TONES = {
+            0: 329.63, // Verde: Mi4 (E4)
+            1: 261.63, // Rojo: Do4 (C4)
+            2: 220.00, // Amarillo: La3 (A3)
+            3: 164.81  // Azul: Mi3 (E3)
+        };
+
+        // --- Estado Global del Juego ---
+        const state = {
+            sequence: [],           // Secuencia generada por la máquina
+            playerStep: 0,          // Índice actual que el jugador está repitiendo
+            round: 0,               // Ronda / Puntuación actual
+            highScore: 0,           // Récord almacenado en localStorage
+            isPlayingSequence: false, // Bloquea interacción mientras la CPU muestra la secuencia
+            isGameActive: false,    // Indica si hay una partida en curso
+            soundEnabled: true,     // Control de audio
+            mode: 'normal',         // 'normal' | 'fast' | 'strict'
+            timeouts: []            // Almacena IDs de temporizadores para cancelarlos al reiniciar
+        };
+
+        // --- Referencias al DOM ---
+        const pads = [
+            document.getElementById('pad-0'),
+            document.getElementById('pad-1'),
+            document.getElementById('pad-2'),
+            document.getElementById('pad-3')
+        ];
+        const consoleBoard = document.getElementById('consoleBoard');
+        const startBtn = document.getElementById('startBtn');
+        const soundToggle = document.getElementById('soundToggle');
+        const iconSoundOn = document.getElementById('iconSoundOn');
+        const iconSoundOff = document.getElementById('iconSoundOff');
+        const soundLabel = document.getElementById('soundLabel');
+        const currentScoreEl = document.getElementById('currentScore');
+        const highScoreEl = document.getElementById('highScore');
+        const hubCounterEl = document.getElementById('hubCounter');
+        const statusBanner = document.getElementById('statusBanner');
+        const statusText = document.getElementById('statusText');
+        const modeButtons = document.querySelectorAll('.mode-btn');
+        const modeDescription = document.getElementById('modeDescription');
+        const modeBadge = document.getElementById('modeBadge');
+
+        // --- Motor de Audio (Web Audio API) ---
+        let audioCtx = null;
+
+        function initAudioContext() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContextClass();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        /**
+         * Reproduce un tono sintetizado suave para un color específico
+         * @param {number} colorIndex - 0 (Verde), 1 (Rojo), 2 (Amarillo), 3 (Azul)
+         * @param {number} duration - Duración en segundos
+         */
+        function playTone(colorIndex, duration = 0.35) {
+            if (!state.soundEnabled) return;
+            try {
+                initAudioContext();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'sine'; // Onda sinusoidal cálida tipo retro
+                osc.frequency.setValueAtTime(TONES[colorIndex], audioCtx.currentTime);
+
+                // Envolvente ADSR simple para evitar clics de audio
+                gainNode.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.35, audioCtx.currentTime + 0.03);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration + 0.02);
+            } catch (e) {
+                console.warn('Audio no disponible:', e);
+            }
+        }
+
+        /**
+         * Reproduce el sonido grave de error cuando el jugador falla
+         */
+        function playErrorSound() {
+            if (!state.soundEnabled) return;
+            try {
+                initAudioContext();
+                const osc = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                osc.type = 'sawtooth'; // Onda diente de sierra áspera para el error
+                osc.frequency.setValueAtTime(110, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(75, audioCtx.currentTime + 0.45);
+
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
+
+                osc.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.52);
+            } catch (e) {
+                console.warn('Audio no disponible:', e);
+            }
+        }
+
+        // --- Gestión de Récord (localStorage) ---
+        function loadHighScore() {
+            try {
+                const saved = localStorage.getItem('simon_dice_highscore');
+                state.highScore = saved ? parseInt(saved, 10) : 0;
+            } catch (e) {
+                state.highScore = 0;
+            }
+            highScoreEl.textContent = state.highScore;
+        }
+
+        function saveHighScore(score) {
+            if (score > state.highScore) {
+                state.highScore = score;
+                highScoreEl.textContent = state.highScore;
+                try {
+                    localStorage.setItem('simon_dice_highscore', state.highScore.toString());
+                } catch (e) {
+                    // Ignorar si el almacenamiento está restringido
+                }
+            }
+        }
+
+        // --- Utilidades de Interfaz ---
+        function clearAllTimeouts() {
+            state.timeouts.forEach(id => clearTimeout(id));
+            state.timeouts = [];
+        }
+
+        function setStatus(message, type = 'neutral') {
+            statusText.textContent = message;
+            statusBanner.className = 'w-full py-2.5 px-4 rounded-xl border text-center transition-all duration-300 ';
+            statusText.classList.remove('status-pulse');
+
+            if (type === 'watch') {
+                statusBanner.classList.add('bg-amber-950/50', 'border-amber-500/40', 'text-amber-200');
+                statusText.classList.add('status-pulse');
+            } else if (type === 'turn') {
+                statusBanner.classList.add('bg-emerald-950/50', 'border-emerald-500/40', 'text-emerald-200');
+            } else if (type === 'error') {
+                statusBanner.classList.add('bg-rose-950/60', 'border-rose-500/50', 'text-rose-200');
+            } else {
+                statusBanner.classList.add('bg-slate-800/70', 'border-slate-700/70', 'text-slate-200');
+            }
+        }
+
+        function setPadsEnabled(enabled) {
+            pads.forEach(pad => {
+                if (enabled) {
+                    pad.classList.remove('disabled');
+                } else {
+                    pad.classList.add('disabled');
+                }
+            });
+        }
+
+        function updateCounters() {
+            currentScoreEl.textContent = state.round;
+            hubCounterEl.textContent = state.round > 0 ? String(state.round).padStart(2, '0') : '--';
+        }
+
+        /**
+         * Ilumina visualmente un botón y reproduce su tono
+         */
+        function activatePad(colorIndex, durationMs = 350) {
+            const pad = pads[colorIndex];
+            if (!pad) return;
+
+            pad.classList.add('active');
+            playTone(colorIndex, durationMs / 1000);
+
+            const tId = setTimeout(() => {
+                pad.classList.remove('active');
+            }, durationMs);
+            state.timeouts.push(tId);
+        }
+
+        // --- Lógica Principal del Juego ---
+
+        function startNewGame() {
+            initAudioContext();
+            clearAllTimeouts();
+            pads.forEach(p => p.classList.remove('active'));
+
+            state.sequence = [];
+            state.playerStep = 0;
+            state.round = 0;
+            state.isGameActive = true;
+            state.isPlayingSequence = true;
+
+            startBtn.textContent = 'Reiniciar Juego';
+            startBtn.classList.remove('from-emerald-500', 'to-teal-600', 'hover:from-emerald-400', 'hover:to-teal-500');
+            startBtn.classList.add('from-slate-700', 'to-slate-800', 'hover:from-slate-600', 'hover:to-slate-700', 'border-slate-600');
+
+            nextRound();
+        }
+
+        function nextRound() {
+            state.round++;
+            state.playerStep = 0;
+            updateCounters();
+
+            // Añadir un paso aleatorio (0 a 3)
+            const randomColor = Math.floor(Math.random() * 4);
+            state.sequence.push(randomColor);
+
+            playSequence();
+        }
+
+        function playSequence() {
+            state.isPlayingSequence = true;
+            setPadsEnabled(false);
+            setStatus('Observa la secuencia...', 'watch');
+
+            // Ajustar velocidad según modo y progreso de rondas
+            const isFast = state.mode === 'fast';
+            const baseStepDelay = isFast ? 420 : 680;
+            const speedUp = Math.min(state.round * 12, isFast ? 140 : 220);
+            const interval = Math.max(260, baseStepDelay - speedUp);
+            const lightDuration = Math.floor(interval * 0.62);
+
+            // Pausa inicial antes de comenzar a mostrar la secuencia
+            const initialDelay = 600;
+
+            state.sequence.forEach((colorIndex, index) => {
+                const tId = setTimeout(() => {
+                    activatePad(colorIndex, lightDuration);
+                }, initialDelay + index * interval);
+                state.timeouts.push(tId);
+            });
+
+            // Habilitar turno del jugador al finalizar la secuencia
+            const endDelay = initialDelay + state.sequence.length * interval + 100;
+            const endTimeout = setTimeout(() => {
+                state.isPlayingSequence = false;
+                setPadsEnabled(true);
+                setStatus('¡Tu turno! Repite la secuencia', 'turn');
+            }, endDelay);
+            state.timeouts.push(endTimeout);
+        }
+
+        function handlePlayerInput(colorIndex) {
+            // Bloquear si el juego no está activo o si la máquina está reproduciendo
+            if (!state.isGameActive || state.isPlayingSequence) return;
+
+            // Iluminar botón presionado por el jugador
+            activatePad(colorIndex, 240);
+
+            const expectedColor = state.sequence[state.playerStep];
+
+            if (colorIndex === expectedColor) {
+                // Acierto en el paso actual
+                state.playerStep++;
+
+                // Verificar si completó toda la secuencia de la ronda
+                if (state.playerStep === state.sequence.length) {
+                    setPadsEnabled(false);
+                    state.isPlayingSequence = true;
+                    saveHighScore(state.round);
+                    setStatus('¡Excelente! Siguiente ronda...', 'turn');
+
+                    const tId = setTimeout(() => {
+                        nextRound();
+                    }, 950);
+                    state.timeouts.push(tId);
+                }
+            } else {
+                // Error del jugador
+                handleMistake();
+            }
+        }
+
+        function handleMistake() {
+            setPadsEnabled(false);
+            state.isPlayingSequence = true;
+            playErrorSound();
+
+            // Efecto visual de vibración en el tablero
+            consoleBoard.classList.remove('console-shake');
+            void consoleBoard.offsetWidth; // Forzar reflow para reiniciar animación
+            consoleBoard.classList.add('console-shake');
+
+            // Destello rojo breve en todos los botones
+            pads.forEach(p => p.classList.add('active'));
+            const flashTimeout = setTimeout(() => {
+                pads.forEach(p => p.classList.remove('active'));
+            }, 350);
+            state.timeouts.push(flashTimeout);
+
+            if (state.mode === 'strict') {
+                // En modo Estricto, cualquier error termina la partida
+                state.isGameActive = false;
+                hubCounterEl.textContent = 'ERR';
+                setStatus(`¡Game Over! Puntuación final: ${state.round - 1}`, 'error');
+                
+                startBtn.textContent = 'Jugar de Nuevo';
+                startBtn.classList.remove('from-slate-700', 'to-slate-800', 'border-slate-600');
+                startBtn.classList.add('from-emerald-500', 'to-teal-600', 'border-emerald-400/30');
+            } else {
+                // En modo Normal o Rápido, se repite la secuencia de la ronda actual
+                state.playerStep = 0;
+                setStatus('¡Ups! Te equivocaste. Observa de nuevo...', 'error');
+
+                const retryTimeout = setTimeout(() => {
+                    playSequence();
+                }, 1300);
+                state.timeouts.push(retryTimeout);
+            }
+        }
+
+        // --- Event Listeners ---
+
+        // Clic y toque en los 4 botones de colores
+        pads.forEach((pad, index) => {
+            pad.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                handlePlayerInput(index);
+            });
+        });
+
+        // Botón Iniciar / Reiniciar
+        startBtn.addEventListener('click', () => {
+            startNewGame();
+        });
+
+        // Control de Sonido
+        soundToggle.addEventListener('click', () => {
+            state.soundEnabled = !state.soundEnabled;
+            if (state.soundEnabled) {
+                initAudioContext();
+                iconSoundOn.classList.remove('hidden');
+                iconSoundOff.classList.add('hidden');
+                soundLabel.textContent = 'Sonido ON';
+            } else {
+                iconSoundOn.classList.add('hidden');
+                iconSoundOff.classList.remove('hidden');
+                soundLabel.textContent = 'Silenciado';
+            }
+        });
+
+        // Selector de Modo / Dificultad
+        const modeDescriptions = {
+            normal: 'Velocidad estándar. Si te equivocas, puedes volver a intentar la ronda.',
+            fast: 'Secuencias mucho más rápidas para poner a prueba tus reflejos.',
+            strict: 'Sin segundas oportunidades: un solo error reinicia el juego desde cero.'
+        };
+
+        const modeNames = {
+            normal: 'Normal',
+            fast: 'Rápido',
+            strict: 'Estricto'
+        };
+
+        modeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const selectedMode = btn.getAttribute('data-mode');
+                if (state.mode === selectedMode) return;
+
+                state.mode = selectedMode;
+
+                // Actualizar estilos de botones
+                modeButtons.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+
+                // Actualizar textos descriptivos
+                modeDescription.textContent = modeDescriptions[selectedMode];
+                modeBadge.textContent = modeNames[selectedMode];
+
+                // Si había una partida en curso, reiniciar con el nuevo modo
+                if (state.isGameActive) {
+                    startNewGame();
+                }
+            });
+        });
+
+        // Soporte opcional para teclado (Teclas 1, 2, 3, 4 o Q, W, A, S)
+        document.addEventListener('keydown', (e) => {
+            if (!state.isGameActive || state.isPlayingSequence) return;
+            const keyMap = {
+                '1': 0, 'q': 0, 'Q': 0,
+                '2': 1, 'w': 1, 'W': 1,
+                '3': 2, 'a': 2, 'A': 2,
+                '4': 3, 's': 3, 'S': 3
+            };
+            if (keyMap.hasOwnProperty(e.key)) {
+                handlePlayerInput(keyMap[e.key]);
+            }
+        });
+
+        // Inicializar aplicación al cargar
+        window.addEventListener('DOMContentLoaded', () => {
+            loadHighScore();
+            updateCounters();
+        });
+    </script>
+</body>
+</html>
