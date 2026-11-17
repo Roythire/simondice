@@ -1,0 +1,1092 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AETHER // Visualizador de Agujero de Gusano 3D</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Space Grotesk / Inter & JetBrains Mono para telemetría -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --hud-bg: rgba(8, 12, 22, 0.72);
+            --hud-border: rgba(148, 163, 184, 0.18);
+            --accent: #38bdf8;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #02040a;
+            font-family: 'Inter', sans-serif;
+            color: #f1f5f9;
+        }
+
+        .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        #glCanvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            z-index: 1;
+            cursor: crosshair;
+        }
+
+        /* Paneles con efecto cristal espacial */
+        .glass-panel {
+            background: var(--hud-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--hud-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65);
+        }
+
+        /* Estilizado personalizado de Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.14);
+            border-radius: 999px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #38bdf8;
+            border: 2px solid #ffffff;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+            transition: transform 0.15s ease, background-color 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: #7dd3fc;
+        }
+
+        /* Barra de progreso del video */
+        #videoProgress::-webkit-slider-thumb {
+            width: 12px;
+            height: 12px;
+            background: #f8fafc;
+        }
+
+        /* Transición suave para ocultar HUD en modo cine */
+        .hud-layer {
+            transition: opacity 0.45s cubic-bezier(0.16, 1, 0.3, 1), transform 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .hud-hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(8px);
+        }
+
+        /* Scrollbar sutil en panel móvil */
+        .custom-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        /* Indicador de Salto Hiperespacial */
+        @keyframes pulseBorder {
+            0%, 100% { border-color: rgba(56, 189, 248, 0.3); }
+            50% { border-color: rgba(56, 189, 248, 0.9); }
+        }
+        .hyperjump-active {
+            animation: pulseBorder 0.6s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Lienzo WebGL de pantalla completa -->
+    <canvas id="glCanvas"></canvas>
+
+    <!-- Elemento de video oculto para texturizado dinámico -->
+    <video id="sourceVideo" playsinline loop crossorigin="anonymous" class="hidden"></video>
+
+    <!-- Botón flotante siempre accesible para restaurar HUD / Pantalla completa -->
+    <div class="fixed top-4 right-4 z-30 flex items-center gap-2">
+        <button id="toggleHudBtn" title="Modo Cine (Ocultar/Mostrar Interfaz)" class="glass-panel p-2.5 rounded-xl text-slate-200 hover:text-sky-400 hover:border-sky-400/50 transition flex items-center gap-2 text-xs font-medium">
+            <svg id="eyeOpenIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <svg id="eyeClosedIcon" class="w-4 h-4 hidden text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+            </svg>
+            <span id="hudBtnLabel" class="hidden sm:inline">Modo Cine</span>
+        </button>
+
+        <button id="fullscreenBtn" title="Pantalla Completa" class="glass-panel p-2.5 rounded-xl text-slate-200 hover:text-sky-400 hover:border-sky-400/50 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- CAPA HUD PRINCIPAL -->
+    <div id="hudContainer" class="hud-layer fixed inset-0 z-20 pointer-events-none flex flex-col justify-between p-4 sm:p-6">
+        
+        <!-- Cabecera Superior Izquierda: Identidad y Telemetría -->
+        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pr-24">
+            <div class="pointer-events-auto">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 rounded-full bg-sky-400 animate-ping"></span>
+                    <h1 class="font-display text-lg sm:text-xl font-bold tracking-widest uppercase text-white">
+                        AETHER <span class="text-sky-400 font-normal">// WORMHOLE</span>
+                    </h1>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Puente Einstein-Rosen • Proyector Espacio-Temporal</p>
+                
+                <!-- Telemetría en vivo -->
+                <div class="mt-3 glass-panel rounded-xl px-3.5 py-2 inline-flex flex-wrap items-center gap-4 text-[11px] font-mono-tech">
+                    <div>
+                        <span class="text-slate-400 block text-[9px] uppercase">Velocidad Warp</span>
+                        <span id="telWarp" class="text-sky-300 font-bold">4.20 c</span>
+                    </div>
+                    <div class="w-px h-6 bg-slate-700/70"></div>
+                    <div>
+                        <span class="text-slate-400 block text-[9px] uppercase">Curvatura</span>
+                        <span id="telCurvature" class="text-indigo-300 font-bold">1.45 rad/s</span>
+                    </div>
+                    <div class="w-px h-6 bg-slate-700/70 hidden sm:block"></div>
+                    <div class="hidden sm:block">
+                        <span class="text-slate-400 block text-[9px] uppercase">Frec. Cuántica</span>
+                        <span id="telFreq" class="text-emerald-300 font-bold">432.0 Hz</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sugerencia central sutil (desaparece tras interactuar) -->
+        <div id="interactionHint" class="self-center text-center pointer-events-none transition-opacity duration-700">
+            <div class="glass-panel px-4 py-2 rounded-full text-xs text-slate-300/90 border-sky-500/20">
+                Mueve el cursor para curvar la trayectoria • <span class="text-sky-400 font-semibold">Mantén presionado</span> para Salto Hiperespacial
+            </div>
+        </div>
+
+        <!-- Panel Inferior: Controles Colapsables -->
+        <div class="w-full max-w-xl pointer-events-auto self-center sm:self-start">
+            <div class="glass-panel rounded-2xl overflow-hidden transition-all duration-300">
+                
+                <!-- Barra Superior del Panel de Control -->
+                <div class="px-4 py-3 flex items-center justify-between border-b border-slate-700/50 bg-slate-900/40">
+                    <div class="flex items-center gap-2">
+                        <button id="collapsePanelBtn" class="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-200 hover:text-sky-400 transition">
+                            <svg id="chevronIcon" class="w-4 h-4 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                            <span>Consola de Navegación</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <!-- Botón de Audio Ambiental Generativo -->
+                        <button id="ambientAudioBtn" class="px-2.5 py-1.5 rounded-lg text-xs font-medium bg-slate-800/90 hover:bg-slate-700 text-slate-300 border border-slate-600/60 transition flex items-center gap-1.5">
+                            <span id="ambientDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+                            <span id="ambientLabel">Motor Warp: OFF</span>
+                        </button>
+
+                        <!-- Botón Subir Video -->
+                        <label for="videoUpload" class="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-semibold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-400/40 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <span>Cargar Video</span>
+                        </label>
+                        <input id="videoUpload" type="file" accept="video/*" class="hidden">
+                    </div>
+                </div>
+
+                <!-- Contenido Colapsable -->
+                <div id="panelBody" class="p-4 space-y-4 max-h-[60vh] overflow-y-auto custom-scroll">
+                    
+                    <!-- Reproductor de Video (Visible solo cuando hay un video cargado) -->
+                    <div id="videoControlsSection" class="hidden bg-slate-950/60 border border-sky-500/25 rounded-xl p-3 space-y-2.5">
+                        <div class="flex items-center justify-between text-xs">
+                            <span id="videoFileName" class="font-medium text-sky-300 truncate max-w-[220px]">video.mp4</span>
+                            <button id="ejectVideoBtn" class="text-[11px] text-rose-400 hover:text-rose-300 underline">Expulsar video</button>
+                        </div>
+
+                        <div class="flex items-center gap-3">
+                            <button id="playPauseBtn" class="p-2 rounded-lg bg-sky-500 text-slate-950 hover:bg-sky-400 transition">
+                                <svg id="playIcon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+                                <svg id="pauseIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75A.75.75 0 007.25 3h-1.5zM12.75 3a.75.75 0 00-.75.75v12.5c0 .414.336.75.75.75h1.5a.75.75 0 00.75-.75V3.75a.75.75 0 00-.75-.75h-1.5z"/></svg>
+                            </button>
+
+                            <input id="videoProgress" type="range" min="0" max="100" value="0" step="0.1" class="flex-1">
+
+                            <div class="flex items-center gap-1.5 w-24">
+                                <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                </svg>
+                                <input id="videoVolume" type="range" min="0" max="1" step="0.05" value="0.8">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Selector de Modos Visuales / Paletas -->
+                    <div>
+                        <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-2">
+                            Espectro Dimensional / Filtro
+                        </label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                            <button data-preset="0" class="preset-btn active px-2.5 py-2 rounded-xl text-xs font-medium border border-sky-400 bg-sky-500/20 text-white transition text-center">
+                                Singularidad Azul
+                            </button>
+                            <button data-preset="1" class="preset-btn px-2.5 py-2 rounded-xl text-xs font-medium border border-slate-700/80 bg-slate-800/50 text-slate-300 hover:border-slate-500 transition text-center">
+                                Horizonte Eventos
+                            </button>
+                            <button data-preset="2" class="preset-btn px-2.5 py-2 rounded-xl text-xs font-medium border border-slate-700/80 bg-slate-800/50 text-slate-300 hover:border-slate-500 transition text-center">
+                                Nebulosa Cuántica
+                            </button>
+                            <button data-preset="3" class="preset-btn px-2.5 py-2 rounded-xl text-xs font-medium border border-slate-700/80 bg-slate-800/50 text-slate-300 hover:border-slate-500 transition text-center">
+                                Hiperespacio Retro
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Deslizadores de Física y Distorsión en Tiempo Real -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Velocidad Warp</span>
+                                <span id="valSpeed" class="font-mono-tech text-sky-400">1.2x</span>
+                            </div>
+                            <input id="sliderSpeed" type="range" min="0.1" max="4.0" step="0.1" value="1.2">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Curvatura Gravitacional</span>
+                                <span id="valCurve" class="font-mono-tech text-sky-400">0.65</span>
+                            </div>
+                            <input id="sliderCurve" type="range" min="0.0" max="1.5" step="0.05" value="0.65">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Aberración Cromática</span>
+                                <span id="valChroma" class="font-mono-tech text-sky-400">0.45</span>
+                            </div>
+                            <input id="sliderChroma" type="range" min="0.0" max="1.5" step="0.05" value="0.45">
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between text-xs mb-1">
+                                <span class="text-slate-300">Reactividad Audio</span>
+                                <span id="valAudio" class="font-mono-tech text-sky-400">0.80</span>
+                            </div>
+                            <input id="sliderAudio" type="range" min="0.0" max="2.0" step="0.05" value="0.80">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensaje de notificación no intrusivo -->
+    <div id="toastMsg" class="fixed bottom-6 right-6 z-40 glass-panel px-4 py-2.5 rounded-xl text-xs text-sky-200 border-sky-400/40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <!-- SHADERS GLSL -->
+    <script id="vertexShader" type="x-shader/x-vertex">
+        attribute vec2 a_position;
+        varying vec2 v_uv;
+        void main() {
+            v_uv = a_position * 0.5 + 0.5;
+            gl_Position = vec4(a_position, 0.0, 1.0);
+        }
+    </script>
+
+    <script id="fragmentShader" type="x-shader/x-fragment">
+        precision highp float;
+
+        varying vec2 v_uv;
+
+        uniform vec2 u_resolution;
+        uniform float u_time;
+        uniform vec2 u_mouse;         // Posición suavizada del cursor (-1 a 1)
+        uniform float u_speed;        // Velocidad de avance
+        uniform float u_curvature;    // Intensidad de torsión/curvatura del túnel
+        uniform float u_chroma;       // Aberración cromática / Doppler
+        uniform float u_hyperjump;    // 0.0 a 1.0 al mantener presionado
+        uniform float u_audioBass;    // Energía de graves (0.0 a 1.0)
+        uniform float u_audioMid;     // Energía de medios (0.0 a 1.0)
+        uniform int u_preset;         // 0: Azul, 1: Horizonte, 2: Cuántica, 3: Retro
+        uniform sampler2D u_videoTex; // Textura del video local
+        uniform float u_hasVideo;     // 1.0 si hay video activo, 0.0 si no
+
+        #define PI 3.14159265359
+        #define TAU 6.28318530718
+
+        // Matriz de rotación 2D
+        mat2 rot(float a) {
+            float s = sin(a), c = cos(a);
+            return mat2(c, -s, s, c);
+        }
+
+        // Hash pseudoaleatorio rápido
+        float hash21(vec2 p) {
+            p = fract(p * vec2(234.34, 435.345));
+            p += dot(p, p + 34.23);
+            return fract(p.x * p.y);
+        }
+
+        // Ruido Value suavizado
+        float noise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            f = f * f * (3.0 - 2.0 * f);
+            float a = hash21(i);
+            float b = hash21(i + vec2(1.0, 0.0));
+            float c = hash21(i + vec2(0.0, 1.0));
+            float d = hash21(i + vec2(1.0, 1.0));
+            return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+        }
+
+        // Movimiento Browniano Fraccional (FBM) para nebulosas
+        float fbm(vec2 p) {
+            float v = 0.0;
+            float amp = 0.5;
+            mat2 m = rot(0.5);
+            for (int i = 0; i < 4; i++) {
+                v += amp * noise(p);
+                p = m * p * 2.02 + vec2(1.7, 9.2);
+                amp *= 0.5;
+            }
+            return v;
+        }
+
+        // Paletas de color cósmicas según el modo seleccionado
+        vec3 getPalette(float t, int preset) {
+            if (preset == 0) {
+                // Singularidad Azul (Interstellar / Cian-Índigo-Blanco)
+                vec3 a = vec3(0.05, 0.12, 0.28);
+                vec3 b = vec3(0.25, 0.55, 0.95);
+                vec3 c = vec3(1.0, 1.0, 1.0);
+                vec3 d = vec3(0.00, 0.15, 0.35);
+                return a + b * cos(TAU * (c * t + d));
+            } else if (preset == 1) {
+                // Horizonte de Eventos (Gargantúa: Ámbar, Dorado, Carmesí, Negro)
+                vec3 a = vec3(0.18, 0.06, 0.02);
+                vec3 b = vec3(0.85, 0.42, 0.12);
+                vec3 c = vec3(1.0, 0.8, 0.5);
+                vec3 d = vec3(0.0, 0.10, 0.25);
+                return a + b * cos(TAU * (c * t + d));
+            } else if (preset == 2) {
+                // Nebulosa Cuántica (Violeta, Magenta, Esmeralda)
+                vec3 a = vec3(0.12, 0.05, 0.22);
+                vec3 b = vec3(0.65, 0.25, 0.85);
+                vec3 c = vec3(1.0, 1.0, 1.0);
+                vec3 d = vec3(0.35, 0.75, 0.20);
+                return a + b * cos(TAU * (c * t + d));
+            } else {
+                // Hiperespacio Retro (Synthwave Neón Cian / Magenta / Dorado)
+                vec3 a = vec3(0.15, 0.04, 0.25);
+                vec3 b = vec3(0.95, 0.20, 0.65);
+                vec3 c = vec3(1.0, 1.0, 1.0);
+                vec3 d = vec3(0.55, 0.15, 0.05);
+                return a + b * cos(TAU * (c * t + d));
+            }
+        }
+
+        // Muestra la textura del video mapeada en coordenadas cilíndricas del túnel
+        vec3 sampleWormholeVideo(vec2 tunnelUV, float chromaShift) {
+            // Mapeo sin costuras (espejo en el ángulo para evitar corte brusco)
+            float u = abs(fract(tunnelUV.x * 2.0) * 2.0 - 1.0);
+            float v = fract(tunnelUV.y * 0.35);
+            vec2 uv = vec2(u, v);
+
+            // Desplazamiento cromático (Redshift / Blueshift) en los canales RGB
+            float r = texture2D(u_videoTex, uv + vec2(chromaShift, 0.0)).r;
+            float g = texture2D(u_videoTex, uv).g;
+            float b = texture2D(u_videoTex, uv - vec2(chromaShift, 0.0)).b;
+            return vec3(r, g, b);
+        }
+
+        // Renderizado de capa principal del agujero de gusano para un desplazamiento de lente dado
+        vec3 renderTunnelLayer(vec2 uv, float lensOffset) {
+            // Efecto de estiramiento de campo de visión (FOV) durante el Salto Hiperespacial
+            float fovScale = 1.0 - u_hyperjump * 0.32 - u_audioBass * 0.08;
+            vec2 p = uv * fovScale;
+
+            // Desplazamiento del centro del túnel según el cursor (inclinación de cámara)
+            vec2 center = u_mouse * 0.38;
+            vec2 delta = p - center;
+            float r = length(delta) + 1e-4;
+
+            // Curvatura gravitacional dinámica en función de la profundidad (1/r)
+            float depth = 1.0 / (r + 0.08 * (1.0 - u_hyperjump * 0.5));
+            
+            // Torsión helicoidal del espacio-tiempo
+            float twist = u_curvature * (1.6 / (r + 0.35)) + sin(u_time * 0.4 + depth * 0.25) * 0.35 * u_curvature;
+            delta = rot(twist + lensOffset * 0.25) * delta;
+
+            // Coordenadas cilíndricas del túnel: ángulo normalizado (0..1) y profundidad
+            float angle = atan(delta.y, delta.x) / TAU + 0.5;
+            float travel = u_time * (1.4 + u_hyperjump * 3.5) + u_audioBass * 0.6;
+            float z = depth * (1.35 + u_hyperjump * 0.8) + travel;
+
+            vec2 tunnelUV = vec2(angle, z);
+
+            // Nebulosa y filamentos de plasma en las paredes del agujero de gusano
+            float n1 = fbm(vec2(angle * 6.0, z * 0.65));
+            float n2 = fbm(vec2(angle * 12.0 - u_time * 0.3, z * 1.4 + n1 * 1.5));
+            float energyFilaments = smoothstep(0.35, 0.85, n1 * 0.6 + n2 * 0.5);
+
+            // Anillos de distorsión cuántica pulsantes
+            float ringWave = sin(z * 4.5 - u_time * 3.0 + n1 * 3.0);
+            float quantumRings = smoothstep(0.88, 0.99, ringWave) * (0.5 + 0.8 * u_audioMid);
+
+            // Color base del túnel procedural
+            vec3 cosmicColor = getPalette(n1 * 0.7 + z * 0.04 + lensOffset * 0.4, u_preset);
+            vec3 wallColor = cosmicColor * (0.45 + 1.35 * energyFilaments);
+            wallColor += getPalette(0.85, u_preset) * quantumRings * 1.4;
+
+            // Modo Hiperespacio Retro: añade rejilla de coordenadas espacio-temporales
+            if (u_preset == 3) {
+                float gridX = smoothstep(0.92, 0.98, abs(sin(angle * PI * 16.0)));
+                float gridZ = smoothstep(0.92, 0.98, abs(sin(z * PI * 2.0)));
+                wallColor += vec3(0.2, 0.9, 1.0) * max(gridX, gridZ) * 0.65;
+            }
+
+            // Si el usuario cargó un video, proyectarlo sobre las paredes curvas del túnel
+            if (u_hasVideo > 0.5) {
+                vec3 vidCol = sampleWormholeVideo(tunnelUV, u_chroma * 0.015 * (1.0 - r * 0.4));
+                // Fusionar el video con los filamentos de energía y aplicar tinte sutil del preset
+                vec3 tintedVideo = mix(vidCol, vidCol * (cosmicColor * 1.6 + 0.35), 0.32);
+                wallColor = mix(tintedVideo, tintedVideo + wallColor * 0.65, 0.45);
+            }
+
+            // Estrellas y partículas de luz viajando a velocidad relativista
+            float starField = 0.0;
+            for (int layer = 0; layer < 2; layer++) {
+                float fl = float(layer) + 1.0;
+                vec2 starGrid = vec2(angle * (24.0 * fl), z * (2.5 * fl) + fl * 13.7);
+                vec2 id = floor(starGrid);
+                vec2 gv = fract(starGrid) - 0.5;
+                float rnd = hash21(id);
+                if (rnd > 0.84) {
+                    // Estiramiento Doppler (redshift / blueshift) según velocidad
+                    float streak = 1.0 + u_hyperjump * 4.5 + u_speed * 0.8;
+                    gv.y /= streak;
+                    float dStar = length(gv - vec2((rnd - 0.9) * 3.0, 0.0));
+                    float brightness = smoothstep(0.18, 0.01, dStar) * (0.5 + 0.5 * sin(u_time * 8.0 + rnd * 40.0));
+                    starField += brightness * (1.2 + u_audioMid);
+                }
+            }
+
+            // Aplicar desplazamiento Doppler a las estrellas (azul al acercarse, rojizo en bordes)
+            vec3 dopplerTint = mix(vec3(0.65, 0.88, 1.0), vec3(1.0, 0.55, 0.45), smoothstep(0.15, 0.85, r));
+            wallColor += dopplerTint * starField * 1.4;
+
+            // Atenuación por profundidad hacia el núcleo de la singularidad (centro brillante / horizonte)
+            float coreGlow = exp(-r * (4.5 - u_hyperjump * 1.8 - u_audioBass * 0.8));
+            vec3 coreColor = mix(getPalette(0.1, u_preset), vec3(1.0, 0.98, 0.95), 0.75);
+            
+            // Anillo de fotones alrededor de la singularidad
+            float photonRing = smoothstep(0.06, 0.0, abs(r - (0.11 + u_audioBass * 0.03)));
+            wallColor += coreColor * photonRing * 1.2;
+
+            // Mezcla final con el núcleo luminoso
+            float fog = smoothstep(0.02, 0.45, r);
+            vec3 finalCol = mix(coreColor * 1.35, wallColor, fog);
+            finalCol += coreColor * coreGlow * 0.65;
+
+            return finalCol;
+        }
+
+        void main() {
+            // Coordenadas normalizadas centradas con relación de aspecto corregida
+            vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+            float distFromCenter = length(uv);
+
+            // Intensidad de aberración cromática radial (aumenta en los bordes y en salto hiperespacial)
+            float caStrength = u_chroma * 0.035 * (distFromCenter + 0.25) * (1.0 + u_hyperjump * 1.8 + u_audioBass * 0.5);
+
+            // Muestreo separado para R, G y B para aberración óptica realista
+            float r = renderTunnelLayer(uv * (1.0 + caStrength),  1.0).r;
+            float g = renderTunnelLayer(uv,                       0.0).g;
+            float b = renderTunnelLayer(uv * (1.0 - caStrength), -1.0).b;
+
+            vec3 color = vec3(r, g, b);
+
+            // Viñeta cinematográfica suave en los extremos de la pantalla
+            float vignette = 1.0 - smoothstep(0.65, 1.45, distFromCenter);
+            color *= mix(0.65, 1.0, vignette);
+
+            // Tone mapping ACES aproximado para evitar saturación quemada
+            color = (color * (2.51 * color + 0.03)) / (color * (2.43 * color + 0.59) + 0.14);
+            color = clamp(color, 0.0, 1.0);
+
+            gl_FragColor = vec4(color, 1.0);
+        }
+    </script>
+
+    <script>
+        /**
+         * AETHER // Motor WebGL + Analizador de Audio + Síntesis Espacial
+         */
+        (function () {
+            // --- Referencias DOM ---
+            const canvas = document.getElementById('glCanvas');
+            const video = document.getElementById('sourceVideo');
+            const hudContainer = document.getElementById('hudContainer');
+            const toggleHudBtn = document.getElementById('toggleHudBtn');
+            const eyeOpenIcon = document.getElementById('eyeOpenIcon');
+            const eyeClosedIcon = document.getElementById('eyeClosedIcon');
+            const hudBtnLabel = document.getElementById('hudBtnLabel');
+            const fullscreenBtn = document.getElementById('fullscreenBtn');
+            const collapsePanelBtn = document.getElementById('collapsePanelBtn');
+            const chevronIcon = document.getElementById('chevronIcon');
+            const panelBody = document.getElementById('panelBody');
+            const interactionHint = document.getElementById('interactionHint');
+            const toastMsg = document.getElementById('toastMsg');
+
+            // Controles de Video y Audio
+            const videoUpload = document.getElementById('videoUpload');
+            const videoControlsSection = document.getElementById('videoControlsSection');
+            const videoFileName = document.getElementById('videoFileName');
+            const ejectVideoBtn = document.getElementById('ejectVideoBtn');
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const playIcon = document.getElementById('playIcon');
+            const pauseIcon = document.getElementById('pauseIcon');
+            const videoProgress = document.getElementById('videoProgress');
+            const videoVolume = document.getElementById('videoVolume');
+            const ambientAudioBtn = document.getElementById('ambientAudioBtn');
+            const ambientDot = document.getElementById('ambientDot');
+            const ambientLabel = document.getElementById('ambientLabel');
+
+            // Sliders y Presets
+            const presetBtns = document.querySelectorAll('.preset-btn');
+            const sliderSpeed = document.getElementById('sliderSpeed');
+            const sliderCurve = document.getElementById('sliderCurve');
+            const sliderChroma = document.getElementById('sliderChroma');
+            const sliderAudio = document.getElementById('sliderAudio');
+
+            const valSpeed = document.getElementById('valSpeed');
+            const valCurve = document.getElementById('valCurve');
+            const valChroma = document.getElementById('valChroma');
+            const valAudio = document.getElementById('valAudio');
+
+            // Telemetría
+            const telWarp = document.getElementById('telWarp');
+            const telCurvature = document.getElementById('telCurvature');
+            const telFreq = document.getElementById('telFreq');
+
+            // --- Estado de la Simulación ---
+            const state = {
+                time: 0,
+                lastFrameTime: performance.now(),
+                speed: 1.2,
+                curvature: 0.65,
+                chroma: 0.45,
+                audioReactivity: 0.80,
+                preset: 0,
+                mouseX: 0,
+                mouseY: 0,
+                targetMouseX: 0,
+                targetMouseY: 0,
+                isHyperjumping: false,
+                hyperjumpFactor: 0,
+                hasVideo: false,
+                videoUrl: null,
+                hudVisible: true,
+                panelCollapsed: false,
+                audioBass: 0,
+                audioMid: 0
+            };
+
+            function showToast(msg) {
+                toastMsg.textContent = msg;
+                toastMsg.style.opacity = '1';
+                clearTimeout(toastMsg._timer);
+                toastMsg._timer = setTimeout(() => {
+                    toastMsg.style.opacity = '0';
+                }, 3000);
+            }
+
+            // --- Inicialización WebGL ---
+            const gl = canvas.getContext('webgl', { antialias: false, alpha: false });
+            if (!gl) {
+                showToast('Tu navegador no soporta WebGL.');
+                return;
+            }
+
+            function compileShader(source, type) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Error compilando shader:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                return shader;
+            }
+
+            const vsSource = document.getElementById('vertexShader').textContent;
+            const fsSource = document.getElementById('fragmentShader').textContent;
+            const vertexShader = compileShader(vsSource, gl.VERTEX_SHADER);
+            const fragmentShader = compileShader(fsSource, gl.FRAGMENT_SHADER);
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Error enlazando programa WebGL:', gl.getProgramInfoLog(program));
+                return;
+            }
+            gl.useProgram(program);
+
+            // Geometría de pantalla completa (2 triángulos)
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+                -1, -1,
+                 1, -1,
+                -1,  1,
+                -1,  1,
+                 1, -1,
+                 1,  1
+            ]), gl.STATIC_DRAW);
+
+            const posAttrib = gl.getAttribLocation(program, 'a_position');
+            gl.enableVertexAttribArray(posAttrib);
+            gl.vertexAttribPointer(posAttrib, 2, gl.FLOAT, false, 0, 0);
+
+            // Uniforms
+            const uniforms = {
+                resolution: gl.getUniformLocation(program, 'u_resolution'),
+                time: gl.getUniformLocation(program, 'u_time'),
+                mouse: gl.getUniformLocation(program, 'u_mouse'),
+                speed: gl.getUniformLocation(program, 'u_speed'),
+                curvature: gl.getUniformLocation(program, 'u_curvature'),
+                chroma: gl.getUniformLocation(program, 'u_chroma'),
+                hyperjump: gl.getUniformLocation(program, 'u_hyperjump'),
+                audioBass: gl.getUniformLocation(program, 'u_audioBass'),
+                audioMid: gl.getUniformLocation(program, 'u_audioMid'),
+                preset: gl.getUniformLocation(program, 'u_preset'),
+                videoTex: gl.getUniformLocation(program, 'u_videoTex'),
+                hasVideo: gl.getUniformLocation(program, 'u_hasVideo')
+            };
+
+            // Textura WebGL para el video
+            const videoTexture = gl.createTexture();
+            gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+            // Inicializar con 1 píxel negro
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+
+            // Ajuste responsivo de resolución
+            function resizeCanvas() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const width = Math.floor(window.innerWidth * dpr);
+                const height = Math.floor(window.innerHeight * dpr);
+                if (canvas.width !== width || canvas.height !== height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    gl.viewport(0, 0, width, height);
+                }
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // --- Sistema de Audio (Web Audio API: Analyser + Motor Warp Sintetizado) ---
+            let audioCtx = null;
+            let analyser = null;
+            let freqData = null;
+            let videoSourceNode = null;
+
+            // Nodos del sintetizador espacial ambiental
+            let ambientActive = false;
+            let ambientNodes = null;
+
+            function ensureAudioContext() {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContextClass();
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 256;
+                    analyser.smoothingTimeConstant = 0.82;
+                    freqData = new Uint8Array(analyser.frequencyBinCount);
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            function connectVideoToAnalyser() {
+                ensureAudioContext();
+                if (!videoSourceNode) {
+                    try {
+                        videoSourceNode = audioCtx.createMediaElementSource(video);
+                        videoSourceNode.connect(analyser);
+                        analyser.connect(audioCtx.destination);
+                    } catch (e) {
+                        console.warn('No se pudo enlazar el audio del video:', e);
+                    }
+                }
+            }
+
+            function toggleAmbientSynth() {
+                ensureAudioContext();
+
+                if (!ambientActive) {
+                    // Crear drone espacial profundo (dos osciladores graves + filtro paso bajo + armónico etéreo)
+                    const masterGain = audioCtx.createGain();
+                    masterGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+                    masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 1.2);
+
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.setValueAtTime(160, audioCtx.currentTime);
+                    filter.Q.setValueAtTime(4.0, audioCtx.currentTime);
+
+                    const osc1 = audioCtx.createOscillator();
+                    osc1.type = 'sawtooth';
+                    osc1.frequency.setValueAtTime(55, audioCtx.currentTime); // La1 (A1)
+
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(82.41, audioCtx.currentTime); // Mi2 (E2)
+
+                    const oscPad = audioCtx.createOscillator();
+                    oscPad.type = 'sine';
+                    oscPad.frequency.setValueAtTime(220, audioCtx.currentTime); // Armónico espacial
+                    const padGain = audioCtx.createGain();
+                    padGain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+
+                    osc1.connect(filter);
+                    osc2.connect(filter);
+                    oscPad.connect(padGain);
+                    padGain.connect(filter);
+
+                    filter.connect(masterGain);
+                    masterGain.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+
+                    osc1.start();
+                    osc2.start();
+                    oscPad.start();
+
+                    ambientNodes = { osc1, osc2, oscPad, filter, masterGain };
+                    ambientActive = true;
+                    ambientDot.classList.remove('bg-slate-500');
+                    ambientDot.classList.add('bg-emerald-400', 'animate-pulse');
+                    ambientLabel.textContent = 'Motor Warp: ON';
+                    showToast('Motor Warp acústico activado');
+                } else {
+                    if (ambientNodes) {
+                        const { osc1, osc2, oscPad, masterGain } = ambientNodes;
+                        masterGain.gain.setTargetAtTime(0.0001, audioCtx.currentTime, 0.25);
+                        setTimeout(() => {
+                            try {
+                                osc1.stop();
+                                osc2.stop();
+                                oscPad.stop();
+                            } catch (e) {}
+                        }, 600);
+                        ambientNodes = null;
+                    }
+                    ambientActive = false;
+                    ambientDot.classList.remove('bg-emerald-400', 'animate-pulse');
+                    ambientDot.classList.add('bg-slate-500');
+                    ambientLabel.textContent = 'Motor Warp: OFF';
+                }
+            }
+
+            ambientAudioBtn.addEventListener('click', toggleAmbientSynth);
+
+            // --- Gestión de Carga y Reproducción de Video Local ---
+            videoUpload.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                if (state.videoUrl) {
+                    URL.revokeObjectURL(state.videoUrl);
+                }
+
+                state.videoUrl = URL.createObjectURL(file);
+                video.src = state.videoUrl;
+                video.volume = parseFloat(videoVolume.value);
+                videoFileName.textContent = file.name;
+
+                connectVideoToAnalyser();
+
+                video.play().then(() => {
+                    state.hasVideo = true;
+                    videoControlsSection.classList.remove('hidden');
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                    showToast(`Proyectando "${file.name}" en el agujero de gusano`);
+                }).catch(err => {
+                    console.error('Error al reproducir video:', err);
+                    showToast('No se pudo reproducir el formato de video seleccionado');
+                });
+            });
+
+            ejectVideoBtn.addEventListener('click', () => {
+                video.pause();
+                video.removeAttribute('src');
+                video.load();
+                if (state.videoUrl) {
+                    URL.revokeObjectURL(state.videoUrl);
+                    state.videoUrl = null;
+                }
+                state.hasVideo = false;
+                videoControlsSection.classList.add('hidden');
+                videoUpload.value = '';
+                showToast('Video expulsado. Modo procedural restaurado.');
+            });
+
+            playPauseBtn.addEventListener('click', () => {
+                if (!state.hasVideo) return;
+                if (video.paused) {
+                    ensureAudioContext();
+                    video.play();
+                    playIcon.classList.add('hidden');
+                    pauseIcon.classList.remove('hidden');
+                } else {
+                    video.pause();
+                    playIcon.classList.remove('hidden');
+                    pauseIcon.classList.add('hidden');
+                }
+            });
+
+            video.addEventListener('timeupdate', () => {
+                if (video.duration && !isNaN(video.duration)) {
+                    videoProgress.value = (video.currentTime / video.duration) * 100;
+                }
+            });
+
+            videoProgress.addEventListener('input', () => {
+                if (video.duration && !isNaN(video.duration)) {
+                    video.currentTime = (parseFloat(videoProgress.value) / 100) * video.duration;
+                }
+            });
+
+            videoVolume.addEventListener('input', () => {
+                video.volume = parseFloat(videoVolume.value);
+            });
+
+            // --- Interacción con Mouse y Touch (Curvatura de Trayectoria + Salto Hiperespacial) ---
+            function updatePointerPosition(clientX, clientY) {
+                const nx = (clientX / window.innerWidth) * 2 - 1;
+                const ny = -((clientY / window.innerHeight) * 2 - 1);
+                state.targetMouseX = Math.max(-1, Math.min(1, nx));
+                state.targetMouseY = Math.max(-1, Math.min(1, ny));
+            }
+
+            window.addEventListener('pointermove', (e) => {
+                updatePointerPosition(e.clientX, e.clientY);
+            });
+
+            canvas.addEventListener('pointerdown', (e) => {
+                updatePointerPosition(e.clientX, e.clientY);
+                state.isHyperjumping = true;
+                interactionHint.style.opacity = '0';
+            });
+
+            window.addEventListener('pointerup', () => {
+                state.isHyperjumping = false;
+            });
+
+            window.addEventListener('pointercancel', () => {
+                state.isHyperjumping = false;
+            });
+
+            // --- Controles de Interfaz (HUD, Colapsar, Pantalla Completa, Sliders) ---
+            toggleHudBtn.addEventListener('click', () => {
+                state.hudVisible = !state.hudVisible;
+                if (state.hudVisible) {
+                    hudContainer.classList.remove('hud-hidden');
+                    eyeOpenIcon.classList.remove('hidden');
+                    eyeClosedIcon.classList.add('hidden');
+                    hudBtnLabel.textContent = 'Modo Cine';
+                } else {
+                    hudContainer.classList.add('hud-hidden');
+                    eyeOpenIcon.classList.add('hidden');
+                    eyeClosedIcon.classList.remove('hidden');
+                    hudBtnLabel.textContent = 'Mostrar HUD';
+                }
+            });
+
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                } else {
+                    document.exitFullscreen().catch(() => {});
+                }
+            });
+
+            collapsePanelBtn.addEventListener('click', () => {
+                state.panelCollapsed = !state.panelCollapsed;
+                if (state.panelCollapsed) {
+                    panelBody.classList.add('hidden');
+                    chevronIcon.style.transform = 'rotate(-90deg)';
+                } else {
+                    panelBody.classList.remove('hidden');
+                    chevronIcon.style.transform = 'rotate(0deg)';
+                }
+            });
+
+            presetBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    presetBtns.forEach(b => {
+                        b.classList.remove('active', 'border-sky-400', 'bg-sky-500/20', 'text-white');
+                        b.classList.add('border-slate-700/80', 'bg-slate-800/50', 'text-slate-300');
+                    });
+                    btn.classList.add('active', 'border-sky-400', 'bg-sky-500/20', 'text-white');
+                    btn.classList.remove('border-slate-700/80', 'bg-slate-800/50', 'text-slate-300');
+                    state.preset = parseInt(btn.getAttribute('data-preset'), 10);
+                });
+            });
+
+            sliderSpeed.addEventListener('input', () => {
+                state.speed = parseFloat(sliderSpeed.value);
+                valSpeed.textContent = `${state.speed.toFixed(1)}x`;
+            });
+
+            sliderCurve.addEventListener('input', () => {
+                state.curvature = parseFloat(sliderCurve.value);
+                valCurve.textContent = state.curvature.toFixed(2);
+            });
+
+            sliderChroma.addEventListener('input', () => {
+                state.chroma = parseFloat(sliderChroma.value);
+                valChroma.textContent = state.chroma.toFixed(2);
+            });
+
+            sliderAudio.addEventListener('input', () => {
+                state.audioReactivity = parseFloat(sliderAudio.value);
+                valAudio.textContent = state.audioReactivity.toFixed(2);
+            });
+
+            // --- Bucle Principal de Renderizado (60 FPS) ---
+            let frameCounter = 0;
+
+            function render(now) {
+                const dt = Math.min((now - state.lastFrameTime) / 1000, 0.1);
+                state.lastFrameTime = now;
+
+                // Suavizado de movimiento del cursor
+                state.mouseX += (state.targetMouseX - state.mouseX) * 0.08;
+                state.mouseY += (state.targetMouseY - state.mouseY) * 0.08;
+
+                // Transición suave del Salto Hiperespacial
+                const targetJump = state.isHyperjumping ? 1.0 : 0.0;
+                state.hyperjumpFactor += (targetJump - state.hyperjumpFactor) * 0.07;
+
+                // Análisis de espectro de audio en tiempo real
+                let rawBass = 0;
+                let rawMid = 0;
+                if (analyser && freqData) {
+                    analyser.getByteFrequencyData(freqData);
+                    // Graves (primeros 10 bins)
+                    for (let i = 0; i < 10; i++) rawBass += freqData[i];
+                    rawBass = (rawBass / (10 * 255)) * state.audioReactivity;
+
+                    // Medios (bins 10 a 45)
+                    for (let i = 10; i < 45; i++) rawMid += freqData[i];
+                    rawMid = (rawMid / (35 * 255)) * state.audioReactivity;
+                }
+
+                state.audioBass += (rawBass - state.audioBass) * 0.25;
+                state.audioMid += (rawMid - state.audioMid) * 0.25;
+
+                // Modular el sintetizador espacial según velocidad y salto hiperespacial
+                if (ambientActive && ambientNodes && audioCtx) {
+                    const effectiveSpeed = state.speed + state.hyperjumpFactor * 2.5;
+                    ambientNodes.osc1.frequency.setTargetAtTime(48 + effectiveSpeed * 12, audioCtx.currentTime, 0.1);
+                    ambientNodes.osc2.frequency.setTargetAtTime(72 + effectiveSpeed * 18, audioCtx.currentTime, 0.1);
+                    ambientNodes.filter.frequency.setTargetAtTime(140 + effectiveSpeed * 110 + state.hyperjumpFactor * 300, audioCtx.currentTime, 0.1);
+                }
+
+                // Avanzar tiempo de simulación proporcional a la velocidad
+                state.time += dt * state.speed;
+
+                // Actualizar textura del video si está listo y reproduciendo
+                if (state.hasVideo && video.readyState >= video.HAVE_CURRENT_DATA) {
+                    gl.bindTexture(gl.TEXTURE_2D, videoTexture);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, video);
+                }
+
+                // Enviar uniforms al shader
+                gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+                gl.uniform1f(uniforms.time, state.time);
+                gl.uniform2f(uniforms.mouse, state.mouseX, state.mouseY);
+                gl.uniform1f(uniforms.speed, state.speed);
+                gl.uniform1f(uniforms.curvature, state.curvature);
+                gl.uniform1f(uniforms.chroma, state.chroma);
+                gl.uniform1f(uniforms.hyperjump, state.hyperjumpFactor);
+                gl.uniform1f(uniforms.audioBass, state.audioBass);
+                gl.uniform1f(uniforms.audioMid, state.audioMid);
+                gl.uniform1i(uniforms.preset, state.preset);
+                gl.uniform1i(uniforms.videoTex, 0);
+                gl.uniform1f(uniforms.hasVideo, state.hasVideo ? 1.0 : 0.0);
+
+                // Dibujar escena
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                // Actualizar telemetría cada 6 cuadros para optimizar DOM
+                frameCounter++;
+                if (frameCounter % 6 === 0 && state.hudVisible) {
+                    const warpFactor = (state.speed * 3.5 + state.hyperjumpFactor * 9.8 + state.audioBass * 2.1).toFixed(2);
+                    const curveVal = (state.curvature * 2.2 + Math.hypot(state.mouseX, state.mouseY) * 1.1).toFixed(2);
+                    const freqVal = (432.0 + state.audioMid * 180 + state.hyperjumpFactor * 240).toFixed(1);
+
+                    telWarp.textContent = `${warpFactor} c`;
+                    telCurvature.textContent = `${curveVal} rad/s`;
+                    telFreq.textContent = `${freqVal} Hz`;
+                }
+
+                requestAnimationFrame(render);
+            }
+
+            requestAnimationFrame(render);
+        })();
+    </script>
+</body>
+</html>
