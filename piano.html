@@ -1,0 +1,1497 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AETHER SYNTH // Piano & FX Studio</title>
+    <!-- Tailwind CSS para layout responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tipografías de estudio: JetBrains Mono para telemetría y Space Grotesk / Inter para hardware -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-studio: #0b0d12;
+            --chassis-dark: #141821;
+            --chassis-border: #252b3b;
+            --accent-cyan: #00f0ff;
+            --accent-amber: #ff9d00;
+            --accent-magenta: #ff2a85;
+            --accent-emerald: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-studio);
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(0, 240, 255, 0.06) 0%, transparent 45%),
+                radial-gradient(circle at 85% 90%, rgba(255, 42, 133, 0.05) 0%, transparent 40%);
+            color: #e2e8f0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .font-display {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Chasis estilo metal cepillado oscuro */
+        .synth-chassis {
+            background: linear-gradient(180deg, #181d28 0%, #11151d 100%);
+            border: 1px solid var(--chassis-border);
+            box-shadow: 
+                0 25px 60px rgba(0, 0, 0, 0.85),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .rack-module {
+            background: #0f131a;
+            border: 1px solid #1e2433;
+            box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.65);
+        }
+
+        /* Pantalla OLED del Osciloscopio */
+        .oled-screen {
+            background: #05080c;
+            border: 1px solid #1e293b;
+            box-shadow: 
+                inset 0 0 20px rgba(0, 240, 255, 0.08),
+                0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        /* Botones tipo Pad Iluminado (Timbres) */
+        .timbre-pad {
+            background: #171c26;
+            border: 1px solid #283042;
+            color: #94a3b8;
+            transition: all 0.16s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+        }
+
+        .timbre-pad:hover {
+            border-color: #3b4761;
+            color: #f1f5f9;
+        }
+
+        .timbre-pad.active {
+            background: linear-gradient(180deg, rgba(0, 240, 255, 0.16) 0%, rgba(0, 240, 255, 0.06) 100%);
+            border-color: var(--accent-cyan);
+            color: #ffffff;
+            box-shadow: 
+                0 0 18px rgba(0, 240, 255, 0.25),
+                inset 0 0 10px rgba(0, 240, 255, 0.15);
+        }
+
+        .timbre-pad .led-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #334155;
+            transition: all 0.16s ease;
+        }
+
+        .timbre-pad.active .led-dot {
+            background: var(--accent-cyan);
+            box-shadow: 0 0 8px var(--accent-cyan);
+        }
+
+        /* Interruptores ON/OFF de Efectos (Pedalera / Rack) */
+        .fx-toggle {
+            background: #181d27;
+            border: 1px solid #2a3244;
+            color: #64748b;
+            transition: all 0.18s ease;
+        }
+
+        .fx-toggle.active-cyan {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+            box-shadow: 0 0 14px rgba(0, 240, 255, 0.25);
+        }
+
+        .fx-toggle.active-amber {
+            border-color: var(--accent-amber);
+            color: var(--accent-amber);
+            background: rgba(255, 157, 0, 0.12);
+            box-shadow: 0 0 14px rgba(255, 157, 0, 0.25);
+        }
+
+        .fx-toggle.active-magenta {
+            border-color: var(--accent-magenta);
+            color: var(--accent-magenta);
+            background: rgba(255, 42, 133, 0.12);
+            box-shadow: 0 0 14px rgba(255, 42, 133, 0.25);
+        }
+
+        /* Sliders estilo consola de estudio */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 5px;
+            background: #1e2534;
+            border-radius: 999px;
+            outline: none;
+            border: 1px solid #293246;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 18px;
+            border-radius: 3px;
+            background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 100%);
+            border: 1px solid #0f172a;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.7);
+            transition: transform 0.1s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            background: #ffffff;
+        }
+
+        /* --- TECLADO DE PIANO 3D REALISTA --- */
+        .piano-wrapper {
+            position: relative;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 6px;
+        }
+
+        .piano-bed {
+            position: relative;
+            display: flex;
+            min-width: 780px; /* Garantiza buena ergonomía en móvil con scroll o tablet/desktop completo */
+            height: 215px;
+            background: #07090d;
+            padding: 10px 8px 12px 8px;
+            border-radius: 12px;
+            border-top: 4px solid #29151a; /* Fieltro rojo oscuro clásico sobre las teclas */
+            box-shadow: inset 0 6px 15px rgba(0, 0, 0, 0.9);
+        }
+
+        /* Teclas Blancas (15 teclas: C a B x2 + C final) */
+        .key-white {
+            position: relative;
+            flex: 1;
+            height: 100%;
+            background: linear-gradient(180deg, #e2e8f0 0%, #ffffff 14%, #f8fafc 88%, #cbd5e1 100%);
+            border: 1px solid #64748b;
+            border-top: none;
+            border-radius: 0 0 7px 7px;
+            margin: 0 1.5px;
+            cursor: pointer;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 10px;
+            box-shadow: 
+                0 6px 0 #94a3b8,
+                0 9px 12px rgba(0, 0, 0, 0.65);
+            transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.08s ease;
+        }
+
+        .key-white:hover {
+            background: linear-gradient(180deg, #f1f5f9 0%, #ffffff 20%, #f1f5f9 90%, #cbd5e1 100%);
+        }
+
+        .key-white.pressed {
+            transform: translateY(5px);
+            background: linear-gradient(180deg, #cbd5e1 0%, #e0f2fe 45%, #bae6fd 100%);
+            box-shadow: 
+                0 1px 0 #64748b,
+                0 2px 5px rgba(0, 240, 255, 0.45),
+                inset 0 -4px 12px rgba(0, 240, 255, 0.35);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Teclas Negras (10 teclas posicionadas absolutamente sobre las blancas) */
+        .key-black {
+            position: absolute;
+            top: 10px;
+            width: 3.9%;
+            height: 61%;
+            background: linear-gradient(180deg, #2d3545 0%, #151922 25%, #0c0e14 88%, #1e2430 100%);
+            border: 1px solid #050608;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            z-index: 10;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 8px;
+            box-shadow: 
+                0 5px 0 #05070a,
+                0 8px 12px rgba(0, 0, 0, 0.85),
+                inset 0 1px 1px rgba(255, 255, 255, 0.22);
+            transition: transform 0.05s ease, box-shadow 0.05s ease, background 0.08s ease;
+        }
+
+        .key-black:hover {
+            background: linear-gradient(180deg, #374151 0%, #1f2430 30%, #11141c 90%, #262e3d 100%);
+        }
+
+        .key-black.pressed {
+            transform: translateY(4px);
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 60%, #0284c7 100%);
+            box-shadow: 
+                0 1px 0 #05070a,
+                0 0 14px rgba(0, 240, 255, 0.65),
+                inset 0 -3px 8px rgba(0, 240, 255, 0.5);
+            border-color: var(--accent-cyan);
+        }
+
+        /* Etiquetas dentro de las teclas */
+        .key-note-label {
+            font-size: 11px;
+            font-weight: 700;
+            pointer-events: none;
+        }
+        .key-white .key-note-label { color: #334155; }
+        .key-black .key-note-label { color: #94a3b8; font-size: 9px; }
+
+        .key-shortcut-badge {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 4px;
+            margin-top: 3px;
+            pointer-events: none;
+        }
+        .key-white .key-shortcut-badge {
+            background: rgba(15, 23, 42, 0.08);
+            color: #475569;
+        }
+        .key-white.pressed .key-shortcut-badge {
+            background: #0284c7;
+            color: #ffffff;
+        }
+        .key-black .key-shortcut-badge {
+            background: rgba(255, 255, 255, 0.1);
+            color: #cbd5e1;
+            font-size: 9px;
+            padding: 1px 4px;
+        }
+        .key-black.pressed .key-shortcut-badge {
+            background: var(--accent-cyan);
+            color: #05080c;
+        }
+
+        /* Scrollbar sutil para el piano en pantallas muy pequeñas */
+        .piano-wrapper::-webkit-scrollbar {
+            height: 6px;
+        }
+        .piano-wrapper::-webkit-scrollbar-track {
+            background: #0b0d12;
+            border-radius: 4px;
+        }
+        .piano-wrapper::-webkit-scrollbar-thumb {
+            background: #283142;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center p-2 sm:p-4 md:p-6">
+
+    <!-- CHASIS PRINCIPAL DEL SINTETIZADOR -->
+    <div class="synth-chassis w-full max-w-6xl rounded-2xl p-3 sm:p-5 space-y-4">
+        
+        <!-- 1. BARRA SUPERIOR: Identidad, Controles Maestros y Osciloscopio -->
+        <header class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
+            
+            <!-- Identidad del Hardware -->
+            <div class="lg:col-span-4 flex items-center justify-between lg:justify-start gap-3">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span id="audioPowerLed" class="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-[0_0_8px_#f59e0b]"></span>
+                        <h1 class="font-display text-lg sm:text-xl font-bold tracking-wider text-white">
+                            AETHER SYNTH <span class="text-cyan-400 font-normal">// STUDIO</span>
+                        </h1>
+                    </div>
+                    <p class="text-[11px] text-slate-400 mt-0.5 font-mono-tech">
+                        POLYPHONIC DSP ENGINE • 24-BIT WEB AUDIO
+                    </p>
+                </div>
+            </div>
+
+            <!-- Controles Maestros: Octava, Sustain y Volumen -->
+            <div class="lg:col-span-5 rack-module rounded-xl p-2.5 flex flex-wrap items-center justify-between gap-3">
+                
+                <!-- Selector de Octava -->
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] font-mono-tech uppercase text-slate-400 tracking-wider">Octava Base</span>
+                    <div class="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+                        <button data-octave="3" class="oct-btn px-2.5 py-1 rounded text-xs font-mono-tech font-bold text-slate-400 hover:text-white transition">C3</button>
+                        <button data-octave="4" class="oct-btn active px-2.5 py-1 rounded text-xs font-mono-tech font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 transition">C4</button>
+                        <button data-octave="5" class="oct-btn px-2.5 py-1 rounded text-xs font-mono-tech font-bold text-slate-400 hover:text-white transition">C5</button>
+                    </div>
+                </div>
+
+                <!-- Botón Sustain (Pedal) -->
+                <div class="flex flex-col gap-1">
+                    <span class="text-[10px] font-mono-tech uppercase text-slate-400 tracking-wider">Pedal Damper</span>
+                    <button id="sustainBtn" class="fx-toggle px-3 py-1.5 rounded-lg text-xs font-mono-tech font-bold flex items-center gap-2">
+                        <span id="sustainLed" class="w-2 h-2 rounded-full bg-slate-600"></span>
+                        <span>SUSTAIN</span>
+                    </button>
+                </div>
+
+                <!-- Volumen Maestro -->
+                <div class="flex flex-col gap-1 flex-1 min-w-[110px]">
+                    <div class="flex justify-between text-[10px] font-mono-tech">
+                        <span class="text-slate-400 uppercase">Master Vol</span>
+                        <span id="masterVolVal" class="text-cyan-400 font-bold">80%</span>
+                    </div>
+                    <input id="masterVolSlider" type="range" min="0" max="1" step="0.01" value="0.80">
+                </div>
+            </div>
+
+            <!-- Pantalla Visualizadora de Onda en Tiempo Real (Osciloscopio / Espectro) -->
+            <div class="lg:col-span-3 oled-screen rounded-xl p-2 relative overflow-hidden h-20 flex flex-col justify-between">
+                <div class="flex items-center justify-between text-[9px] font-mono-tech text-cyan-400/80 z-10 px-1">
+                    <span id="activeNoteDisplay">READY // TOUCH KEY</span>
+                    <button id="scopeModeBtn" class="hover:text-white underline cursor-pointer">WAVE / SPEC</button>
+                </div>
+                <canvas id="scopeCanvas" class="absolute inset-0 w-full h-full"></canvas>
+            </div>
+        </header>
+
+        <!-- 2. SECCIÓN CENTRAL: Selector de Timbre + Consola de Efectos (FX Rack) -->
+        <section class="grid grid-cols-1 xl:grid-cols-12 gap-3">
+            
+            <!-- Módulo de Timbres / Forma de Onda (4 columnas en XL) -->
+            <div class="xl:col-span-4 rack-module rounded-xl p-3 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                    <span class="text-xs font-display font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                        <span class="w-1.5 h-3.5 bg-cyan-400 rounded-sm"></span>
+                        Oscilador / Timbre
+                    </span>
+                    <span class="text-[10px] font-mono-tech text-slate-500">OSC BANK A</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <button data-timbre="epiano" class="timbre-pad active p-2.5 rounded-xl text-left flex flex-col justify-between gap-1.5">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xs font-bold">Piano Eléctrico</span>
+                            <span class="led-dot"></span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono-tech">Rhodes Warm FM</span>
+                    </button>
+
+                    <button data-timbre="analog" class="timbre-pad p-2.5 rounded-xl text-left flex flex-col justify-between gap-1.5">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xs font-bold">Synth Analógico</span>
+                            <span class="led-dot"></span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono-tech">Dual Sawtooth</span>
+                    </button>
+
+                    <button data-timbre="bell" class="timbre-pad p-2.5 rounded-xl text-left flex flex-col justify-between gap-1.5">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xs font-bold">Pad Cristalino</span>
+                            <span class="led-dot"></span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono-tech">Bell / Triangle</span>
+                    </button>
+
+                    <button data-timbre="retro" class="timbre-pad p-2.5 rounded-xl text-left flex flex-col justify-between gap-1.5">
+                        <div class="flex items-center justify-between w-full">
+                            <span class="text-xs font-bold">Retro 8-Bit</span>
+                            <span class="led-dot"></span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 font-mono-tech">Chiptune Square</span>
+                    </button>
+                </div>
+
+                <!-- Módulo Bonus: Modo Acorde / Arpegiador Inteligente -->
+                <div class="bg-slate-950/80 border border-slate-800/90 rounded-xl p-2.5 flex items-center justify-between gap-2">
+                    <div>
+                        <span class="text-[11px] font-bold text-magenta-400 text-pink-400 block">Smart Chord / Arp</span>
+                        <span class="text-[10px] text-slate-400">Toca acordes o arpegios con 1 tecla</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <select id="chordModeSelect" class="bg-slate-900 border border-slate-700 text-xs font-mono-tech text-slate-200 rounded-lg px-2 py-1.5 outline-none focus:border-pink-500">
+                            <option value="off">OFF (Nota)</option>
+                            <option value="major">Acorde Mayor</option>
+                            <option value="minor">Acorde Menor</option>
+                            <option value="arp">Arpegio 1/8</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consola de Efectos de Audio en Tiempo Real (8 columnas en XL) -->
+            <div class="xl:col-span-8 rack-module rounded-xl p-3 flex flex-col justify-between space-y-3">
+                <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                    <span class="text-xs font-display font-bold uppercase tracking-wider text-slate-200 flex items-center gap-2">
+                        <span class="w-1.5 h-3.5 bg-amber-400 rounded-sm"></span>
+                        Rack de Efectos DSP (Cadena en Tiempo Real)
+                    </span>
+                    <button id="resetFxBtn" class="text-[10px] font-mono-tech text-slate-400 hover:text-cyan-400 underline">
+                        Reset FX
+                    </button>
+                </div>
+
+                <!-- Grid de 5 Módulos de Efectos -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
+                    
+                    <!-- 1. FILTRO PASO BAJO (Low-Pass Filter) -->
+                    <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Filtro LP</span>
+                            <button id="fxFilterBtn" class="fx-toggle active-cyan px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold">ON</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Corte</span>
+                                    <span id="valFilterFreq" class="text-cyan-400">6.5kHz</span>
+                                </div>
+                                <input id="sliderFilterFreq" type="range" min="150" max="12000" step="50" value="6500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Resonancia</span>
+                                    <span id="valFilterQ" class="text-cyan-400">1.5</span>
+                                </div>
+                                <input id="sliderFilterQ" type="range" min="0.5" max="14" step="0.5" value="1.5">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DISTORSIÓN / OVERDRIVE -->
+                    <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Overdrive</span>
+                            <button id="fxDistBtn" class="fx-toggle px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold">OFF</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Drive</span>
+                                    <span id="valDistDrive" class="text-amber-400">35%</span>
+                                </div>
+                                <input id="sliderDistDrive" type="range" min="0" max="100" step="1" value="35">
+                            </div>
+                            <p class="text-[9px] text-slate-500 leading-tight">Saturación armónica de válvula analógica.</p>
+                        </div>
+                    </div>
+
+                    <!-- 3. CHORUS / MODULACIÓN ESTÉREO -->
+                    <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Chorus</span>
+                            <button id="fxChorusBtn" class="fx-toggle px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold">OFF</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Profundidad</span>
+                                    <span id="valChorusDepth" class="text-pink-400">50%</span>
+                                </div>
+                                <input id="sliderChorusDepth" type="range" min="0" max="100" step="1" value="50">
+                            </div>
+                            <p class="text-[9px] text-slate-500 leading-tight">Modulación LFO dual para amplitud estéreo.</p>
+                        </div>
+                    </div>
+
+                    <!-- 4. DELAY / ECO RÍTMICO -->
+                    <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Delay Eco</span>
+                            <button id="fxDelayBtn" class="fx-toggle px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold">OFF</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Tiempo</span>
+                                    <span id="valDelayTime" class="text-amber-400">0.32s</span>
+                                </div>
+                                <input id="sliderDelayTime" type="range" min="0.08" max="0.85" step="0.02" value="0.32">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Feedback</span>
+                                    <span id="valDelayFb" class="text-amber-400">40%</span>
+                                </div>
+                                <input id="sliderDelayFb" type="range" min="0.05" max="0.78" step="0.02" value="0.40">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5. REVERB (ESPACIO / SALA CONVOLVER) -->
+                    <div class="bg-slate-950/70 border border-slate-800/90 rounded-xl p-2.5 flex flex-col justify-between gap-2.5">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-200">Reverb Hall</span>
+                            <button id="fxReverbBtn" class="fx-toggle active-cyan px-2 py-0.5 rounded text-[10px] font-mono-tech font-bold">ON</button>
+                        </div>
+                        <div class="space-y-2">
+                            <div>
+                                <div class="flex justify-between text-[10px] font-mono-tech text-slate-400 mb-0.5">
+                                    <span>Mezcla Wet</span>
+                                    <span id="valReverbMix" class="text-cyan-400">35%</span>
+                                </div>
+                                <input id="sliderReverbMix" type="range" min="0" max="1" step="0.02" value="0.35">
+                            </div>
+                            <p class="text-[9px] text-slate-500 leading-tight">Convolución acústica de sala de conciertos.</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. TECLADO DE PIANO INTERACTIVO DE 2 OCTAVAS (25 TECLAS) -->
+        <section class="space-y-1.5">
+            <div class="flex items-center justify-between px-1 text-[11px] text-slate-400">
+                <span class="font-mono-tech">25-KEY VELOCITY KEYBOARD • SOPORTE GLISSANDO & MULTITOUCH</span>
+                <span class="hidden sm:inline font-mono-tech text-slate-500">Teclas: A-K (Octava 1) • K-; (Octava 2)</span>
+            </div>
+            
+            <div class="piano-wrapper">
+                <div id="pianoBed" class="piano-bed">
+                    <!-- Las 25 teclas se generan dinámicamente con precisión geométrica desde JS -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        /**
+         * AETHER SYNTH // Piano & FX Studio
+         * Arquitectura DSP completa con Web Audio API:
+         * Voces Polifónicas -> Filtro LP -> Overdrive -> Chorus -> Delay -> Reverb -> Master Gain -> AnalyserNode -> Destino
+         */
+        (function () {
+            // --- Definición de las 25 Notas (2 Octavas completas: C a B x2 + C final) ---
+            const NOTES_DEF = [
+                { name: 'C',  semitone: 0,  isBlack: false, keyLabel: 'A', codes: ['KeyA'] },
+                { name: 'C#', semitone: 1,  isBlack: true,  keyLabel: 'W', codes: ['KeyW'] },
+                { name: 'D',  semitone: 2,  isBlack: false, keyLabel: 'S', codes: ['KeyS'] },
+                { name: 'D#', semitone: 3,  isBlack: true,  keyLabel: 'E', codes: ['KeyE'] },
+                { name: 'E',  semitone: 4,  isBlack: false, keyLabel: 'D', codes: ['KeyD'] },
+                { name: 'F',  semitone: 5,  isBlack: false, keyLabel: 'F', codes: ['KeyF'] },
+                { name: 'F#', semitone: 6,  isBlack: true,  keyLabel: 'T', codes: ['KeyT'] },
+                { name: 'G',  semitone: 7,  isBlack: false, keyLabel: 'G', codes: ['KeyG'] },
+                { name: 'G#', semitone: 8,  isBlack: true,  keyLabel: 'Y', codes: ['KeyY'] },
+                { name: 'A',  semitone: 9,  isBlack: false, keyLabel: 'H', codes: ['KeyH'] },
+                { name: 'A#', semitone: 10, isBlack: true,  keyLabel: 'U', codes: ['KeyU'] },
+                { name: 'B',  semitone: 11, isBlack: false, keyLabel: 'J', codes: ['KeyJ'] },
+                // Segunda Octava
+                { name: 'C',  semitone: 12, isBlack: false, keyLabel: 'K', codes: ['KeyK'] },
+                { name: 'C#', semitone: 13, isBlack: true,  keyLabel: 'O', codes: ['KeyO'] },
+                { name: 'D',  semitone: 14, isBlack: false, keyLabel: 'L', codes: ['KeyL'] },
+                { name: 'D#', semitone: 15, isBlack: true,  keyLabel: 'P', codes: ['KeyP'] },
+                { name: 'E',  semitone: 16, isBlack: false, keyLabel: 'Ñ', codes: ['Semicolon'] },
+                { name: 'F',  semitone: 17, isBlack: false, keyLabel: 'Z', codes: ['Quote', 'KeyZ'] },
+                { name: 'F#', semitone: 18, isBlack: true,  keyLabel: 'X', codes: ['BracketLeft', 'KeyX'] },
+                { name: 'G',  semitone: 19, isBlack: false, keyLabel: 'C', codes: ['KeyC'] },
+                { name: 'G#', semitone: 20, isBlack: true,  keyLabel: 'V', codes: ['KeyV'] },
+                { name: 'A',  semitone: 21, isBlack: false, keyLabel: 'B', codes: ['KeyB'] },
+                { name: 'A#', semitone: 22, isBlack: true,  keyLabel: 'N', codes: ['KeyN'] },
+                { name: 'B',  semitone: 23, isBlack: false, keyLabel: 'M', codes: ['KeyM'] },
+                // C Final (Octava + 2)
+                { name: 'C',  semitone: 24, isBlack: false, keyLabel: ',', codes: ['Comma'] }
+            ];
+
+            // --- Estado Global del Sintetizador ---
+            const state = {
+                baseOctave: 4,
+                timbre: 'epiano', // 'epiano' | 'analog' | 'bell' | 'retro'
+                sustain: false,
+                chordMode: 'off', // 'off' | 'major' | 'minor' | 'arp'
+                masterVolume: 0.80,
+                scopeMode: 'wave', // 'wave' | 'spectrum'
+                fx: {
+                    filterOn: true,
+                    filterFreq: 6500,
+                    filterQ: 1.5,
+                    distOn: false,
+                    distDrive: 35,
+                    chorusOn: false,
+                    chorusDepth: 50,
+                    delayOn: false,
+                    delayTime: 0.32,
+                    delayFeedback: 0.40,
+                    reverbOn: true,
+                    reverbMix: 0.35
+                }
+            };
+
+            // Registro de voces activas (keyIndex -> objeto de nodos de voz) y notas sostenidas
+            const activeVoices = new Map();
+            const sustainedVoices = new Set();
+            const keyElements = [];
+            const codeToKeyIndex = new Map();
+
+            // --- Motor de Audio (Web Audio API) ---
+            let audioCtx = null;
+            let analyser = null;
+            let masterGain = null;
+            let voiceBus = null;
+
+            // Nodos de Efectos DSP
+            let lpFilter = null;
+            let distNode = null;
+            let distDryGain = null;
+            let distWetGain = null;
+            let chorusDelay = null;
+            let chorusLFO = null;
+            let chorusLFOGain = null;
+            let chorusWetGain = null;
+            let delayNode = null;
+            let delayFeedbackGain = null;
+            let delayWetGain = null;
+            let convolverNode = null;
+            let reverbDryGain = null;
+            let reverbWetGain = null;
+
+            /**
+             * Genera una curva de saturación cálida para el WaveShaperNode (Overdrive)
+             */
+            function makeDistortionCurve(amount) {
+                const k = amount * 2.5;
+                const samples = 44100;
+                const curve = new Float32Array(samples);
+                const deg = Math.PI / 180;
+                for (let i = 0; i < samples; ++i) {
+                    const x = (i * 2) / samples - 1;
+                    curve[i] = k === 0 ? x : ((3 + k) * x * 20 * deg) / (Math.PI + k * Math.abs(x));
+                }
+                return curve;
+            }
+
+            /**
+             * Genera una respuesta al impulso estéreo procedural para el Reverb de Sala
+             */
+            function createImpulseResponse(ctx, duration = 2.4, decay = 2.8) {
+                const rate = ctx.sampleRate;
+                const length = Math.floor(rate * duration);
+                const impulse = ctx.createBuffer(2, length, rate);
+                for (let ch = 0; ch < 2; ch++) {
+                    const data = impulse.getChannelData(ch);
+                    for (let i = 0; i < length; i++) {
+                        const env = Math.pow(1 - i / length, decay);
+                        data[i] = (Math.random() * 2 - 1) * env;
+                    }
+                }
+                return impulse;
+            }
+
+            /**
+             * Inicializa el AudioContext y toda la cadena de efectos al primer gesto del usuario
+             */
+            function initAudioEngine() {
+                if (!audioCtx) {
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AudioContextClass();
+
+                    // Bus de entrada de todas las voces polifónicas
+                    voiceBus = audioCtx.createGain();
+                    voiceBus.gain.value = 0.55;
+
+                    // 1. Filtro Paso Bajo (BiquadFilterNode)
+                    lpFilter = audioCtx.createBiquadFilter();
+                    lpFilter.type = 'lowpass';
+                    lpFilter.frequency.value = state.fx.filterOn ? state.fx.filterFreq : 20000;
+                    lpFilter.Q.value = state.fx.filterQ;
+
+                    // 2. Overdrive / Distorsión (Paralelo Dry/Wet)
+                    distNode = audioCtx.createWaveShaper();
+                    distNode.curve = makeDistortionCurve(state.fx.distDrive);
+                    distNode.oversample = '4x';
+                    distDryGain = audioCtx.createGain();
+                    distWetGain = audioCtx.createGain();
+                    const postDistBus = audioCtx.createGain();
+
+                    // 3. Chorus (Delay corto modulado por LFO)
+                    chorusDelay = audioCtx.createDelay();
+                    chorusDelay.delayTime.value = 0.025;
+                    chorusLFO = audioCtx.createOscillator();
+                    chorusLFO.type = 'sine';
+                    chorusLFO.frequency.value = 1.6; // 1.6 Hz
+                    chorusLFOGain = audioCtx.createGain();
+                    chorusLFOGain.gain.value = 0.004;
+                    chorusWetGain = audioCtx.createGain();
+                    const postChorusBus = audioCtx.createGain();
+
+                    chorusLFO.connect(chorusLFOGain);
+                    chorusLFOGain.connect(chorusDelay.delayTime);
+                    chorusLFO.start();
+
+                    // 4. Delay / Eco con Feedback
+                    delayNode = audioCtx.createDelay(2.0);
+                    delayNode.delayTime.value = state.fx.delayTime;
+                    delayFeedbackGain = audioCtx.createGain();
+                    delayFeedbackGain.gain.value = state.fx.delayFeedback;
+                    delayWetGain = audioCtx.createGain();
+                    const postDelayBus = audioCtx.createGain();
+
+                    // 5. Reverb Hall (ConvolverNode)
+                    convolverNode = audioCtx.createConvolver();
+                    convolverNode.buffer = createImpulseResponse(audioCtx, 2.5, 2.6);
+                    reverbDryGain = audioCtx.createGain();
+                    reverbWetGain = audioCtx.createGain();
+
+                    // Salida Maestra y Analizador
+                    masterGain = audioCtx.createGain();
+                    masterGain.gain.value = state.masterVolume;
+
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 1024;
+                    analyser.smoothingTimeConstant = 0.85;
+
+                    // --- Enrutamiento de la Cadena DSP ---
+                    voiceBus.connect(lpFilter);
+
+                    // Filtro -> Overdrive (Dry + Wet)
+                    lpFilter.connect(distDryGain);
+                    lpFilter.connect(distNode);
+                    distNode.connect(distWetGain);
+                    distDryGain.connect(postDistBus);
+                    distWetGain.connect(postDistBus);
+
+                    // Post-Overdrive -> Chorus (Directo + Wet modulado)
+                    postDistBus.connect(postChorusBus);
+                    postDistBus.connect(chorusDelay);
+                    chorusDelay.connect(chorusWetGain);
+                    chorusWetGain.connect(postChorusBus);
+
+                    // Post-Chorus -> Delay (Directo + Bucle Feedback)
+                    postChorusBus.connect(postDelayBus);
+                    postChorusBus.connect(delayNode);
+                    delayNode.connect(delayFeedbackGain);
+                    delayFeedbackGain.connect(delayNode);
+                    delayNode.connect(delayWetGain);
+                    delayWetGain.connect(postDelayBus);
+
+                    // Post-Delay -> Reverb (Dry + Wet)
+                    postDelayBus.connect(reverbDryGain);
+                    postDelayBus.connect(convolverNode);
+                    convolverNode.connect(reverbWetGain);
+
+                    reverbDryGain.connect(masterGain);
+                    reverbWetGain.connect(masterGain);
+
+                    // Master -> Analyser -> Altavoces
+                    masterGain.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+
+                    syncEffectsParameters();
+
+                    // Encender LED indicador de motor activo
+                    const led = document.getElementById('audioPowerLed');
+                    led.classList.remove('bg-amber-500', 'shadow-[0_0_8px_#f59e0b]');
+                    led.classList.add('bg-cyan-400', 'shadow-[0_0_10px_#00f0ff]');
+                }
+
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }
+
+            /**
+             * Sincroniza todos los parámetros actuales de la UI con los nodos Web Audio
+             */
+            function syncEffectsParameters() {
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+
+                // Filtro Paso Bajo
+                const targetFreq = state.fx.filterOn ? state.fx.filterFreq : 20000;
+                lpFilter.frequency.setTargetAtTime(targetFreq, now, 0.02);
+                lpFilter.Q.setTargetAtTime(state.fx.filterOn ? state.fx.filterQ : 0.7, now, 0.02);
+
+                // Overdrive
+                distNode.curve = makeDistortionCurve(state.fx.distDrive);
+                distDryGain.gain.setTargetAtTime(state.fx.distOn ? 0.45 : 1.0, now, 0.02);
+                distWetGain.gain.setTargetAtTime(state.fx.distOn ? 0.55 : 0.0, now, 0.02);
+
+                // Chorus
+                const chorusAmt = (state.fx.chorusDepth / 100) * 0.65;
+                chorusLFOGain.gain.setTargetAtTime(0.002 + (state.fx.chorusDepth / 100) * 0.005, now, 0.02);
+                chorusWetGain.gain.setTargetAtTime(state.fx.chorusOn ? chorusAmt : 0.0, now, 0.02);
+
+                // Delay
+                delayNode.delayTime.setTargetAtTime(state.fx.delayTime, now, 0.03);
+                delayFeedbackGain.gain.setTargetAtTime(state.fx.delayOn ? state.fx.delayFeedback : 0.0, now, 0.03);
+                delayWetGain.gain.setTargetAtTime(state.fx.delayOn ? 0.45 : 0.0, now, 0.03);
+
+                // Reverb
+                const wet = state.fx.reverbOn ? state.fx.reverbMix : 0.0;
+                reverbDryGain.gain.setTargetAtTime(1.0 - wet * 0.35, now, 0.03);
+                reverbWetGain.gain.setTargetAtTime(wet * 0.9, now, 0.03);
+
+                // Master
+                masterGain.gain.setTargetAtTime(state.masterVolume, now, 0.02);
+            }
+
+            /**
+             * Calcula la frecuencia en Hz dado el semitono y la octava base
+             */
+            function getFrequency(semitoneOffset) {
+                // C4 = MIDI 60 = 261.6256 Hz
+                const midiNote = (state.baseOctave + 1) * 12 + semitoneOffset;
+                return 440 * Math.pow(2, (midiNote - 69) / 12);
+            }
+
+            /**
+             * Sintetiza una única nota física según el timbre seleccionado con envolvente ADSR
+             */
+            function createSingleTone(freq, startTime, velocity = 0.85) {
+                const now = startTime || audioCtx.currentTime;
+                const voiceGain = audioCtx.createGain();
+                voiceGain.connect(voiceBus);
+
+                const oscillators = [];
+                let releaseTime = 0.35;
+
+                if (state.timbre === 'epiano') {
+                    // Piano Eléctrico cálido: Fundamental sinusoidal + armónico 2x + campana FM sutil
+                    const osc1 = audioCtx.createOscillator();
+                    osc1.type = 'sine';
+                    osc1.frequency.setValueAtTime(freq, now);
+
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'triangle';
+                    osc2.frequency.setValueAtTime(freq * 2, now);
+                    const subGain = audioCtx.createGain();
+                    subGain.gain.setValueAtTime(0.22, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.02, now + 0.9);
+
+                    osc1.connect(voiceGain);
+                    osc2.connect(subGain);
+                    subGain.connect(voiceGain);
+
+                    // Envolvente ADSR tipo Piano Eléctrico
+                    voiceGain.gain.setValueAtTime(0.0001, now);
+                    voiceGain.gain.linearRampToValueAtTime(velocity * 0.65, now + 0.012);
+                    voiceGain.gain.exponentialRampToValueAtTime(velocity * 0.28, now + 0.45);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    oscillators.push(osc1, osc2);
+                    releaseTime = 0.42;
+
+                } else if (state.timbre === 'analog') {
+                    // Sintetizador Analógico: Dos ondas Sawtooth ligeramente desafinadas (Detune)
+                    const osc1 = audioCtx.createOscillator();
+                    osc1.type = 'sawtooth';
+                    osc1.frequency.setValueAtTime(freq, now);
+                    osc1.detune.setValueAtTime(-7, now);
+
+                    const osc2 = audioCtx.createOscillator();
+                    osc2.type = 'sawtooth';
+                    osc2.frequency.setValueAtTime(freq, now);
+                    osc2.detune.setValueAtTime(7, now);
+
+                    osc1.connect(voiceGain);
+                    osc2.connect(voiceGain);
+
+                    voiceGain.gain.setValueAtTime(0.0001, now);
+                    voiceGain.gain.linearRampToValueAtTime(velocity * 0.42, now + 0.025);
+                    voiceGain.gain.exponentialRampToValueAtTime(velocity * 0.32, now + 0.3);
+
+                    osc1.start(now);
+                    osc2.start(now);
+                    oscillators.push(osc1, osc2);
+                    releaseTime = 0.35;
+
+                } else if (state.timbre === 'bell') {
+                    // Campana / Pad Cristalino: FM suave + Triangle
+                    const carrier = audioCtx.createOscillator();
+                    carrier.type = 'triangle';
+                    carrier.frequency.setValueAtTime(freq, now);
+
+                    const modulator = audioCtx.createOscillator();
+                    modulator.type = 'sine';
+                    modulator.frequency.setValueAtTime(freq * 3.0, now);
+
+                    const modGain = audioCtx.createGain();
+                    modGain.gain.setValueAtTime(freq * 0.8, now);
+                    modGain.gain.exponentialRampToValueAtTime(1.0, now + 0.7);
+
+                    modulator.connect(modGain);
+                    modGain.connect(carrier.frequency);
+                    carrier.connect(voiceGain);
+
+                    voiceGain.gain.setValueAtTime(0.0001, now);
+                    voiceGain.gain.linearRampToValueAtTime(velocity * 0.55, now + 0.04);
+                    voiceGain.gain.exponentialRampToValueAtTime(velocity * 0.25, now + 0.8);
+
+                    carrier.start(now);
+                    modulator.start(now);
+                    oscillators.push(carrier, modulator);
+                    releaseTime = 0.65;
+
+                } else {
+                    // Retro 8-Bit: Onda cuadrada pura (Chiptune)
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(freq, now);
+                    osc.connect(voiceGain);
+
+                    voiceGain.gain.setValueAtTime(0.0001, now);
+                    voiceGain.gain.linearRampToValueAtTime(velocity * 0.32, now + 0.008);
+                    voiceGain.gain.exponentialRampToValueAtTime(velocity * 0.22, now + 0.2);
+
+                    osc.start(now);
+                    oscillators.push(osc);
+                    releaseTime = 0.16;
+                }
+
+                return { oscillators, voiceGain, releaseTime };
+            }
+
+            /**
+             * Activa una tecla (soporta nota simple, acordes o arpegiador)
+             */
+            function noteOn(keyIndex) {
+                initAudioEngine();
+
+                // Si ya estaba sonando por sustain, detener la instancia previa
+                if (activeVoices.has(keyIndex)) {
+                    stopVoiceNodes(activeVoices.get(keyIndex));
+                    activeVoices.delete(keyIndex);
+                    sustainedVoices.delete(keyIndex);
+                }
+
+                const noteInfo = NOTES_DEF[keyIndex];
+                if (!noteInfo) return;
+
+                // Iluminar tecla en UI
+                const keyEl = keyElements[keyIndex];
+                if (keyEl) keyEl.classList.add('pressed');
+
+                // Mostrar nota en la pantalla OLED
+                const currentOct = state.baseOctave + Math.floor(noteInfo.semitone / 12);
+                document.getElementById('activeNoteDisplay').textContent = `NOTE: ${noteInfo.name}${currentOct} // ${state.timbre.toUpperCase()}`;
+
+                const now = audioCtx.currentTime;
+                const tones = [];
+                let arpTimer = null;
+
+                if (state.chordMode === 'off') {
+                    tones.push(createSingleTone(getFrequency(noteInfo.semitone), now, 0.9));
+                } else if (state.chordMode === 'major') {
+                    // Tríada Mayor (0, +4, +7 semitonos)
+                    [0, 4, 7].forEach(interval => {
+                        tones.push(createSingleTone(getFrequency(noteInfo.semitone + interval), now, 0.55));
+                    });
+                } else if (state.chordMode === 'minor') {
+                    // Tríada Menor (0, +3, +7 semitonos)
+                    [0, 3, 7].forEach(interval => {
+                        tones.push(createSingleTone(getFrequency(noteInfo.semitone + interval), now, 0.55));
+                    });
+                } else if (state.chordMode === 'arp') {
+                    // Arpegiador rítmico automático (0, +4, +7, +12 semitonos)
+                    const pattern = [0, 4, 7, 12];
+                    let step = 0;
+                    const triggerStep = () => {
+                        const freq = getFrequency(noteInfo.semitone + pattern[step % pattern.length]);
+                        const tone = createSingleTone(freq, audioCtx.currentTime, 0.75);
+                        setTimeout(() => releaseSingleTone(tone), 130);
+                        step++;
+                    };
+                    triggerStep();
+                    arpTimer = setInterval(triggerStep, 165);
+                }
+
+                activeVoices.set(keyIndex, { tones, arpTimer });
+            }
+
+            function releaseSingleTone(tone) {
+                if (!audioCtx || !tone) return;
+                const now = audioCtx.currentTime;
+                try {
+                    tone.voiceGain.gain.cancelScheduledValues(now);
+                    tone.voiceGain.gain.setValueAtTime(Math.max(tone.voiceGain.gain.value, 0.0001), now);
+                    tone.voiceGain.gain.exponentialRampToValueAtTime(0.0001, now + tone.releaseTime);
+                    tone.oscillators.forEach(osc => {
+                        osc.stop(now + tone.releaseTime + 0.03);
+                    });
+                } catch (e) {}
+            }
+
+            function stopVoiceNodes(voiceObj) {
+                if (!voiceObj) return;
+                if (voiceObj.arpTimer) {
+                    clearInterval(voiceObj.arpTimer);
+                }
+                voiceObj.tones.forEach(t => releaseSingleTone(t));
+            }
+
+            /**
+             * Libera una tecla (respeta el pedal Sustain si está activo)
+             */
+            function noteOff(keyIndex) {
+                const keyEl = keyElements[keyIndex];
+                if (keyEl) keyEl.classList.remove('pressed');
+
+                if (!activeVoices.has(keyIndex)) return;
+
+                if (state.sustain && state.chordMode !== 'arp') {
+                    sustainedVoices.add(keyIndex);
+                } else {
+                    stopVoiceNodes(activeVoices.get(keyIndex));
+                    activeVoices.delete(keyIndex);
+                }
+            }
+
+            function releaseAllSustained() {
+                sustainedVoices.forEach(keyIndex => {
+                    if (activeVoices.has(keyIndex)) {
+                        stopVoiceNodes(activeVoices.get(keyIndex));
+                        activeVoices.delete(keyIndex);
+                    }
+                });
+                sustainedVoices.clear();
+            }
+
+            // --- Construcción Dinámica del Teclado de 25 Teclas ---
+            function buildKeyboard() {
+                const pianoBed = document.getElementById('pianoBed');
+                pianoBed.innerHTML = '';
+                keyElements.length = 0;
+
+                const whiteKeys = NOTES_DEF.filter(n => !n.isBlack);
+                const totalWhite = whiteKeys.length; // 15 teclas blancas
+                let whiteCount = 0;
+
+                NOTES_DEF.forEach((note, index) => {
+                    note.codes.forEach(code => codeToKeyIndex.set(code, index));
+
+                    const keyEl = document.createElement('div');
+                    keyEl.dataset.keyIndex = index;
+
+                    const noteLabel = document.createElement('span');
+                    noteLabel.className = 'key-note-label';
+                    noteLabel.textContent = note.name;
+
+                    const shortcutBadge = document.createElement('span');
+                    shortcutBadge.className = 'key-shortcut-badge';
+                    shortcutBadge.textContent = note.keyLabel;
+
+                    keyEl.appendChild(noteLabel);
+                    keyEl.appendChild(shortcutBadge);
+
+                    if (!note.isBlack) {
+                        keyEl.className = 'key-white';
+                        pianoBed.appendChild(keyEl);
+                        whiteCount++;
+                    } else {
+                        keyEl.className = 'key-black';
+                        // Posicionar exactamente entre la tecla blanca anterior y la siguiente
+                        const leftPercent = (whiteCount / totalWhite) * 100 - 1.95;
+                        keyEl.style.left = `${leftPercent}%`;
+                        pianoBed.appendChild(keyEl);
+                    }
+
+                    keyElements[index] = keyEl;
+                });
+
+                // --- Soporte Interactivo Completo: Ratón (con Glissando) y Multitouch ---
+                let isMouseDown = false;
+                let currentMouseKey = null;
+                const activeTouches = new Map(); // touchId -> keyIndex
+
+                pianoBed.addEventListener('mousedown', (e) => {
+                    const keyEl = e.target.closest('[data-key-index]');
+                    if (!keyEl) return;
+                    e.preventDefault();
+                    isMouseDown = true;
+                    const idx = parseInt(keyEl.dataset.keyIndex, 10);
+                    currentMouseKey = idx;
+                    noteOn(idx);
+                });
+
+                pianoBed.addEventListener('mouseover', (e) => {
+                    if (!isMouseDown) return;
+                    const keyEl = e.target.closest('[data-key-index]');
+                    if (!keyEl) return;
+                    const idx = parseInt(keyEl.dataset.keyIndex, 10);
+                    if (idx !== currentMouseKey) {
+                        if (currentMouseKey !== null) noteOff(currentMouseKey);
+                        currentMouseKey = idx;
+                        noteOn(idx);
+                    }
+                });
+
+                window.addEventListener('mouseup', () => {
+                    if (isMouseDown) {
+                        isMouseDown = false;
+                        if (currentMouseKey !== null) {
+                            noteOff(currentMouseKey);
+                            currentMouseKey = null;
+                        }
+                    }
+                });
+
+                // Eventos táctiles multitouch con soporte para deslizar dedos
+                pianoBed.addEventListener('touchstart', (e) => {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const t = e.changedTouches[i];
+                        const el = document.elementFromPoint(t.clientX, t.clientY);
+                        const keyEl = el ? el.closest('[data-key-index]') : null;
+                        if (keyEl) {
+                            e.preventDefault();
+                            const idx = parseInt(keyEl.dataset.keyIndex, 10);
+                            activeTouches.set(t.identifier, idx);
+                            noteOn(idx);
+                        }
+                    }
+                }, { passive: false });
+
+                pianoBed.addEventListener('touchmove', (e) => {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const t = e.changedTouches[i];
+                        if (!activeTouches.has(t.identifier)) continue;
+                        const el = document.elementFromPoint(t.clientX, t.clientY);
+                        const keyEl = el ? el.closest('[data-key-index]') : null;
+                        const prevIdx = activeTouches.get(t.identifier);
+
+                        if (keyEl) {
+                            const newIdx = parseInt(keyEl.dataset.keyIndex, 10);
+                            if (newIdx !== prevIdx) {
+                                noteOff(prevIdx);
+                                activeTouches.set(t.identifier, newIdx);
+                                noteOn(newIdx);
+                            }
+                        }
+                    }
+                }, { passive: false });
+
+                const handleTouchEnd = (e) => {
+                    for (let i = 0; i < e.changedTouches.length; i++) {
+                        const t = e.changedTouches[i];
+                        if (activeTouches.has(t.identifier)) {
+                            const idx = activeTouches.get(t.identifier);
+                            noteOff(idx);
+                            activeTouches.delete(t.identifier);
+                        }
+                    }
+                };
+
+                pianoBed.addEventListener('touchend', handleTouchEnd);
+                pianoBed.addEventListener('touchcancel', handleTouchEnd);
+            }
+
+            // --- Controles de Teclado Físico ---
+            const pressedKeyCodes = new Set();
+
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
+                if (codeToKeyIndex.has(e.code)) {
+                    e.preventDefault();
+                    if (!pressedKeyCodes.has(e.code)) {
+                        pressedKeyCodes.add(e.code);
+                        noteOn(codeToKeyIndex.get(e.code));
+                    }
+                } else if (e.code === 'Space') {
+                    // Barra espaciadora activa/desactiva Sustain rápidamente
+                    e.preventDefault();
+                    document.getElementById('sustainBtn').click();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (codeToKeyIndex.has(e.code)) {
+                    pressedKeyCodes.delete(e.code);
+                    noteOff(codeToKeyIndex.get(e.code));
+                }
+            });
+
+            // --- Vinculación de Controles de la Consola ---
+            // Selector de Octava
+            document.querySelectorAll('.oct-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.oct-btn').forEach(b => {
+                        b.classList.remove('active', 'bg-cyan-500/20', 'text-cyan-300', 'border', 'border-cyan-400/50');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.add('active', 'bg-cyan-500/20', 'text-cyan-300', 'border', 'border-cyan-400/50');
+                    btn.classList.remove('text-slate-400');
+                    state.baseOctave = parseInt(btn.dataset.octave, 10);
+                });
+            });
+
+            // Botón Sustain
+            const sustainBtn = document.getElementById('sustainBtn');
+            const sustainLed = document.getElementById('sustainLed');
+            sustainBtn.addEventListener('click', () => {
+                state.sustain = !state.sustain;
+                if (state.sustain) {
+                    sustainBtn.classList.add('active-cyan');
+                    sustainLed.classList.remove('bg-slate-600');
+                    sustainLed.classList.add('bg-cyan-400', 'shadow-[0_0_8px_#00f0ff]');
+                } else {
+                    sustainBtn.classList.remove('active-cyan');
+                    sustainLed.classList.add('bg-slate-600');
+                    sustainLed.classList.remove('bg-cyan-400', 'shadow-[0_0_8px_#00f0ff]');
+                    releaseAllSustained();
+                }
+            });
+
+            // Volumen Maestro
+            const masterVolSlider = document.getElementById('masterVolSlider');
+            const masterVolVal = document.getElementById('masterVolVal');
+            masterVolSlider.addEventListener('input', () => {
+                state.masterVolume = parseFloat(masterVolSlider.value);
+                masterVolVal.textContent = `${Math.round(state.masterVolume * 100)}%`;
+                syncEffectsParameters();
+            });
+
+            // Selector de Timbre
+            document.querySelectorAll('.timbre-pad').forEach(pad => {
+                pad.addEventListener('click', () => {
+                    document.querySelectorAll('.timbre-pad').forEach(p => p.classList.remove('active'));
+                    pad.classList.add('active');
+                    state.timbre = pad.dataset.timbre;
+                });
+            });
+
+            // Selector Modo Acorde / Arpegiador
+            document.getElementById('chordModeSelect').addEventListener('change', (e) => {
+                state.chordMode = e.target.value;
+            });
+
+            // --- Interruptores y Sliders de Efectos DSP ---
+            function setupFxToggle(btnId, stateKey, activeClass) {
+                const btn = document.getElementById(btnId);
+                btn.addEventListener('click', () => {
+                    state.fx[stateKey] = !state.fx[stateKey];
+                    if (state.fx[stateKey]) {
+                        btn.textContent = 'ON';
+                        btn.classList.add(activeClass);
+                    } else {
+                        btn.textContent = 'OFF';
+                        btn.classList.remove(activeClass);
+                    }
+                    syncEffectsParameters();
+                });
+            }
+
+            setupFxToggle('fxFilterBtn', 'filterOn', 'active-cyan');
+            setupFxToggle('fxDistBtn', 'distOn', 'active-amber');
+            setupFxToggle('fxChorusBtn', 'chorusOn', 'active-magenta');
+            setupFxToggle('fxDelayBtn', 'delayOn', 'active-amber');
+            setupFxToggle('fxReverbBtn', 'reverbOn', 'active-cyan');
+
+            // Sliders de parámetros
+            document.getElementById('sliderFilterFreq').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.fx.filterFreq = val;
+                document.getElementById('valFilterFreq').textContent = val >= 1000 ? `${(val / 1000).toFixed(1)}kHz` : `${val}Hz`;
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderFilterQ').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.fx.filterQ = val;
+                document.getElementById('valFilterQ').textContent = val.toFixed(1);
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderDistDrive').addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                state.fx.distDrive = val;
+                document.getElementById('valDistDrive').textContent = `${val}%`;
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderChorusDepth').addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                state.fx.chorusDepth = val;
+                document.getElementById('valChorusDepth').textContent = `${val}%`;
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderDelayTime').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.fx.delayTime = val;
+                document.getElementById('valDelayTime').textContent = `${val.toFixed(2)}s`;
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderDelayFb').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.fx.delayFeedback = val;
+                document.getElementById('valDelayFb').textContent = `${Math.round(val * 100)}%`;
+                syncEffectsParameters();
+            });
+
+            document.getElementById('sliderReverbMix').addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value);
+                state.fx.reverbMix = val;
+                document.getElementById('valReverbMix').textContent = `${Math.round(val * 100)}%`;
+                syncEffectsParameters();
+            });
+
+            // Botón Reset FX
+            document.getElementById('resetFxBtn').addEventListener('click', () => {
+                state.fx = {
+                    filterOn: true, filterFreq: 6500, filterQ: 1.5,
+                    distOn: false, distDrive: 35,
+                    chorusOn: false, chorusDepth: 50,
+                    delayOn: false, delayTime: 0.32, delayFeedback: 0.40,
+                    reverbOn: true, reverbMix: 0.35
+                };
+
+                document.getElementById('fxFilterBtn').textContent = 'ON';
+                document.getElementById('fxFilterBtn').classList.add('active-cyan');
+                document.getElementById('fxDistBtn').textContent = 'OFF';
+                document.getElementById('fxDistBtn').classList.remove('active-amber');
+                document.getElementById('fxChorusBtn').textContent = 'OFF';
+                document.getElementById('fxChorusBtn').classList.remove('active-magenta');
+                document.getElementById('fxDelayBtn').textContent = 'OFF';
+                document.getElementById('fxDelayBtn').classList.remove('active-amber');
+                document.getElementById('fxReverbBtn').textContent = 'ON';
+                document.getElementById('fxReverbBtn').classList.add('active-cyan');
+
+                document.getElementById('sliderFilterFreq').value = 6500;
+                document.getElementById('valFilterFreq').textContent = '6.5kHz';
+                document.getElementById('sliderFilterQ').value = 1.5;
+                document.getElementById('valFilterQ').textContent = '1.5';
+                document.getElementById('sliderDistDrive').value = 35;
+                document.getElementById('valDistDrive').textContent = '35%';
+                document.getElementById('sliderChorusDepth').value = 50;
+                document.getElementById('valChorusDepth').textContent = '50%';
+                document.getElementById('sliderDelayTime').value = 0.32;
+                document.getElementById('valDelayTime').textContent = '0.32s';
+                document.getElementById('sliderDelayFb').value = 0.40;
+                document.getElementById('valDelayFb').textContent = '40%';
+                document.getElementById('sliderReverbMix').value = 0.35;
+                document.getElementById('valReverbMix').textContent = '35%';
+
+                syncEffectsParameters();
+            });
+
+            // --- Osciloscopio / Analizador de Espectro en Tiempo Real (HTML5 Canvas) ---
+            const scopeCanvas = document.getElementById('scopeCanvas');
+            const scopeCtx = scopeCanvas.getContext('2d');
+
+            document.getElementById('scopeModeBtn').addEventListener('click', () => {
+                state.scopeMode = state.scopeMode === 'wave' ? 'spectrum' : 'wave';
+            });
+
+            function resizeScopeCanvas() {
+                const rect = scopeCanvas.getBoundingClientRect();
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                scopeCanvas.width = Math.floor(rect.width * dpr);
+                scopeCanvas.height = Math.floor(rect.height * dpr);
+            }
+            window.addEventListener('resize', resizeScopeCanvas);
+            resizeScopeCanvas();
+
+            function drawVisualizer() {
+                const w = scopeCanvas.width;
+                const h = scopeCanvas.height;
+
+                scopeCtx.fillStyle = 'rgba(5, 8, 12, 0.35)';
+                scopeCtx.fillRect(0, 0, w, h);
+
+                // Rejilla sutil de osciloscopio
+                scopeCtx.strokeStyle = 'rgba(0, 240, 255, 0.08)';
+                scopeCtx.lineWidth = 1;
+                scopeCtx.beginPath();
+                scopeCtx.moveTo(0, h / 2);
+                scopeCtx.lineTo(w, h / 2);
+                scopeCtx.stroke();
+
+                if (!analyser) {
+                    // Línea plana en reposo antes del primer toque
+                    scopeCtx.strokeStyle = '#00f0ff';
+                    scopeCtx.lineWidth = 2;
+                    scopeCtx.beginPath();
+                    scopeCtx.moveTo(0, h / 2);
+                    scopeCtx.lineTo(w, h / 2);
+                    scopeCtx.stroke();
+                    requestAnimationFrame(drawVisualizer);
+                    return;
+                }
+
+                if (state.scopeMode === 'wave') {
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    analyser.getByteTimeDomainData(dataArray);
+
+                    scopeCtx.lineWidth = 2.2;
+                    scopeCtx.strokeStyle = '#00f0ff';
+                    scopeCtx.shadowBlur = 8;
+                    scopeCtx.shadowColor = '#00f0ff';
+                    scopeCtx.beginPath();
+
+                    const sliceWidth = w / bufferLength;
+                    let x = 0;
+
+                    for (let i = 0; i < bufferLength; i++) {
+                        const v = dataArray[i] / 128.0;
+                        const y = (v * h) / 2;
+                        if (i === 0) scopeCtx.moveTo(x, y);
+                        else scopeCtx.lineTo(x, y);
+                        x += sliceWidth;
+                    }
+
+                    scopeCtx.lineTo(w, h / 2);
+                    scopeCtx.stroke();
+                    scopeCtx.shadowBlur = 0;
+                } else {
+                    // Modo Analizador de Espectro (Barras de frecuencia)
+                    const bufferLength = analyser.frequencyBinCount;
+                    const freqData = new Uint8Array(bufferLength);
+                    analyser.getByteFrequencyData(freqData);
+
+                    const bars = 48;
+                    const step = Math.floor(bufferLength * 0.45 / bars);
+                    const barWidth = (w / bars) - 2;
+
+                    for (let i = 0; i < bars; i++) {
+                        const val = freqData[i * step] / 255;
+                        const barHeight = val * (h - 16);
+                        const x = i * (barWidth + 2);
+                        const y = h - barHeight;
+
+                        const grad = scopeCtx.createLinearGradient(0, h, 0, y);
+                        grad.addColorStop(0, '#00f0ff');
+                        grad.addColorStop(0.6, '#ff9d00');
+                        grad.addColorStop(1, '#ff2a85');
+
+                        scopeCtx.fillStyle = grad;
+                        scopeCtx.fillRect(x, y, barWidth, barHeight);
+                    }
+                }
+
+                requestAnimationFrame(drawVisualizer);
+            }
+
+            // Inicializar interfaz
+            buildKeyboard();
+            drawVisualizer();
+        })();
+    </script>
+</body>
+</html>
