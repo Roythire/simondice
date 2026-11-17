@@ -129,6 +129,56 @@
         .hyperjump-active {
             animation: pulseBorder 0.6s infinite;
         }
+
+        /* Estilos del Menú Desplegable Cósmico de Portales */
+        .portals-trigger {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(168, 85, 247, 0.24));
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 12px rgba(168, 85, 247, 0.15);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .portals-trigger:hover,
+        .portals-trigger[aria-expanded="true"] {
+            background: linear-gradient(135deg, rgba(14, 165, 233, 0.28), rgba(168, 85, 247, 0.36));
+            border-color: #7dd3fc;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.45), 0 0 14px rgba(192, 132, 252, 0.35);
+        }
+
+        .portals-trigger:hover .vortex-icon,
+        .portals-trigger[aria-expanded="true"] .vortex-icon {
+            transform: rotate(180deg) scale(1.08);
+        }
+
+        .vortex-icon {
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .portals-menu {
+            background: rgba(8, 12, 22, 0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 
+                0 22px 50px rgba(0, 0, 0, 0.85),
+                0 0 28px rgba(56, 189, 248, 0.18);
+            transform-origin: top right;
+            transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+        }
+
+        .portals-menu.closed {
+            opacity: 0;
+            transform: scale(0.95) translateY(-6px);
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .portals-menu.open {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            visibility: visible;
+            pointer-events: auto;
+        }
     </style>
 </head>
 <body>
@@ -139,19 +189,78 @@
     <!-- Elemento de video oculto para texturizado dinámico -->
     <video id="sourceVideo" playsinline loop crossorigin="anonymous" class="hidden"></video>
 
-    <!-- Botón flotante siempre accesible para restaurar HUD / Pantalla completa -->
-    <div class="fixed top-4 right-4 z-30 flex items-center gap-2">
-        <!-- Enlace directo al juego Simón Dice -->
-        <a href="https://roythire.github.io/simondice/index.html" target="_blank" rel="noopener noreferrer" title="Abrir juego Simón Dice" class="glass-panel px-3 py-2.5 rounded-xl text-xs font-semibold text-emerald-300 hover:text-white bg-emerald-500/15 hover:bg-emerald-500/30 border-emerald-400/40 hover:border-emerald-300 transition flex items-center gap-2 shadow-lg shadow-emerald-950/40">
-            <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span>Jugar Simón Dice</span>
-            <svg class="w-3 h-3 opacity-75 hidden sm:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-        </a>
+    <!-- Botones flotantes superiores (Portales + Modo Cine + Pantalla Completa) -->
+    <div class="fixed top-4 right-4 z-40 flex items-center gap-2">
+        <!-- Menú Desplegable Cósmico: Explorar Mundos / Portales -->
+        <div id="portalsDropdownWrapper" class="relative">
+            <button id="portalsMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" class="glass-panel portals-trigger px-3 py-2.5 rounded-xl text-xs font-semibold text-sky-200 hover:text-white transition flex items-center gap-2">
+                <!-- Ícono SVG de Vórtice Dimensional -->
+                <svg class="vortex-icon w-4 h-4 text-sky-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" stroke-opacity="0.45" stroke-dasharray="4 3" />
+                    <path d="M12 3a9 9 0 0 1 6.36 15.36" class="text-purple-400" stroke="currentColor" />
+                    <path d="M12 6a6 6 0 1 0 6 6" />
+                    <path d="M12 9a3 3 0 1 1-3 3" />
+                    <circle cx="12" cy="12" r="1" fill="currentColor" />
+                </svg>
+                <span class="hidden sm:inline">Explorar Mundos</span>
+                <span class="sm:hidden">Portales</span>
+                <svg id="portalsChevron" class="w-3.5 h-3.5 text-sky-300 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M19 9l-7 7-7-7" />
+                </svg>
+            </button>
+
+            <!-- Panel Desplegable con Enlaces Directos -->
+            <div id="portalsMenuPanel" role="menu" class="portals-menu closed absolute right-0 mt-2 w-64 sm:w-72 rounded-2xl p-2 z-50">
+                <div class="px-3 py-1.5 border-b border-slate-800/90 mb-1.5 flex items-center justify-between">
+                    <span class="font-display text-[10px] font-bold uppercase tracking-widest text-sky-400">Portales Dimensionales</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping"></span>
+                </div>
+
+                <!-- Portal 1: Simón Dice -->
+                <a href="https://roythire.github.io/simondice/index.html" target="_blank" rel="noopener noreferrer" role="menuitem" class="group flex items-center gap-3 p-2.5 rounded-xl hover:bg-purple-500/15 border border-transparent hover:border-purple-400/35 transition">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500/25 to-sky-600/25 border border-purple-400/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                        <svg class="w-5 h-5 text-purple-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M12 3v18" />
+                            <path d="M3 12h18" />
+                            <circle cx="12" cy="12" r="3" fill="#080c16" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-100 group-hover:text-purple-300 transition">Simón Dice</span>
+                            <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-purple-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </div>
+                        <p class="text-[11px] text-slate-400 truncate">Desafío de memoria neón</p>
+                    </div>
+                </a>
+
+                <!-- Portal 2: Piano & FX Studio -->
+                <a href="https://roythire.github.io/simondice/piano.html" target="_blank" rel="noopener noreferrer" role="menuitem" class="group flex items-center gap-3 p-2.5 mt-1 rounded-xl hover:bg-sky-500/15 border border-transparent hover:border-sky-400/35 transition">
+                    <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-sky-500/25 to-cyan-600/25 border border-sky-400/40 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+                        <svg class="w-5 h-5 text-sky-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="16" rx="2" />
+                            <path d="M7 4v10" />
+                            <path d="M11 4v10" />
+                            <path d="M15 4v10" />
+                            <path d="M19 4v10" />
+                            <path d="M3 14h18" />
+                        </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-100 group-hover:text-sky-300 transition">Piano & FX Studio</span>
+                            <svg class="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-300 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </div>
+                        <p class="text-[11px] text-slate-400 truncate">Sintetizador polifónico DSP</p>
+                    </div>
+                </a>
+            </div>
+        </div>
 
         <button id="toggleHudBtn" title="Modo Cine (Ocultar/Mostrar Interfaz)" class="glass-panel p-2.5 rounded-xl text-slate-200 hover:text-sky-400 hover:border-sky-400/50 transition flex items-center gap-2 text-xs font-medium">
             <svg id="eyeOpenIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -590,6 +699,43 @@
             const panelBody = document.getElementById('panelBody');
             const interactionHint = document.getElementById('interactionHint');
             const toastMsg = document.getElementById('toastMsg');
+
+            // Menú Desplegable de Portales
+            const portalsDropdownWrapper = document.getElementById('portalsDropdownWrapper');
+            const portalsMenuBtn = document.getElementById('portalsMenuBtn');
+            const portalsMenuPanel = document.getElementById('portalsMenuPanel');
+            const portalsChevron = document.getElementById('portalsChevron');
+
+            function setPortalsMenuOpen(isOpen) {
+                portalsMenuBtn.setAttribute('aria-expanded', String(isOpen));
+                if (isOpen) {
+                    portalsMenuPanel.classList.remove('closed');
+                    portalsMenuPanel.classList.add('open');
+                    portalsChevron.style.transform = 'rotate(180deg)';
+                } else {
+                    portalsMenuPanel.classList.remove('open');
+                    portalsMenuPanel.classList.add('closed');
+                    portalsChevron.style.transform = 'rotate(0deg)';
+                }
+            }
+
+            portalsMenuBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const currentlyOpen = portalsMenuBtn.getAttribute('aria-expanded') === 'true';
+                setPortalsMenuOpen(!currentlyOpen);
+            });
+
+            document.addEventListener('pointerdown', (e) => {
+                if (!portalsDropdownWrapper.contains(e.target)) {
+                    setPortalsMenuOpen(false);
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    setPortalsMenuOpen(false);
+                }
+            });
 
             // Controles de Video y Audio
             const videoUpload = document.getElementById('videoUpload');
